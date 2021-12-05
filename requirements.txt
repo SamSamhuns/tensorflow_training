@@ -1,0 +1,5 @@
+easydict==1.9
+imageio==2.13.1
+tensorflow==2.7.0
+tensorflow-model-optimization==0.7.0
+tqdm==4.62.3
