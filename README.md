@@ -27,7 +27,7 @@ $ python data_preparation/_0_data_duplication.py -rd data/sample_bird_dataset -t
 ### Train-Val-Test Splitting
 
 ```shell
-$ python data_preparation/_1_create_train_test_split.py -rd data/duplicated_bird_dataset -td data/split_bird_dataset -vs VAL_SPLIT -ts TEST_SPLIT
+$ python data_preparation/_1_create_train_val_test_split.py -rd data/duplicated_bird_dataset -td data/split_bird_dataset -vs VAL_SPLIT -ts TEST_SPLIT
 # to check the number of images in train, val and test dirs
 $ bash data/count_files_per_subdir.sh data/split_bird_dataset
 ```
@@ -36,28 +36,44 @@ $ bash data/count_files_per_subdir.sh data/split_bird_dataset
 
 ```shell
 # convert train data to npz
-$ python data_preparation/_2_convert_dataset_to_npz.py -rd data/split_bird_dataset/train -nd data/npz_bird_dataset/train -cp data/bird_dataset_classmap.txt
+$ python data_preparation/_2_convert_imgs_to_npz.py -rd data/split_bird_dataset/train -nd data/npz_bird_dataset/train -cp data/bird_dataset_classmap.txt
 # convert val data to npz
-$ python data_preparation/_2_convert_dataset_to_npz.py -rd data/split_bird_dataset/val -nd data/npz_bird_dataset/val -cp data/bird_dataset_classmap.txt
-# convert test data to npz
-$ python data_preparation/_2_convert_dataset_to_npz.py -rd data/split_bird_dataset/test -nd data/npz_bird_dataset/test -cp data/bird_dataset_classmap.txt
+$ python data_preparation/_2_convert_imgs_to_npz.py -rd data/split_bird_dataset/val -nd data/npz_bird_dataset/val -cp data/bird_dataset_classmap.txt
 ```
+
+Note: test dataset is not converted to npz or tfrecord as fast-loading is not a priority as we only run through the test data once.
 
 ### Convert Data to tfrecords
 
 ```shell
 # convert train npz files into train tfrecord, select NUM_SHARDS so that each shard has around 200 imgs
-$ python data_preparation/_3_convert_npz_tfrecord.py -nd data/npz_bird_dataset/train -td data/tfrecord_bird_dataset/train -ns NUM_SHARDS
-# convert train npz files into val tfrecord, select NUM_SHARDS so that each shard has around 200 imgs
-$ python data_preparation/_3_convert_npz_tfrecord.py -nd data/npz_bird_dataset/val -td data/tfrecord_bird_dataset/val -ns NUM_SHARDS
-# convert train npz files into test tfrecord, select NUM_SHARDS so that each shard has around 200 imgs
-$ python data_preparation/_3_convert_npz_tfrecord.py -nd data/npz_bird_dataset/test -td data/tfrecord_bird_dataset/test -ns NUM_SHARDS
+$ python data_preparation/_3_convert_npz_to_tfrecord.py -nd data/npz_bird_dataset/train -td data/tfrecord_bird_dataset/train -ns NUM_SHARDS
+# convert val npz files into val tfrecord, select NUM_SHARDS so that each shard has around 200 imgs
+$ python data_preparation/_3_convert_npz_to_tfrecord.py -nd data/npz_bird_dataset/val -td data/tfrecord_bird_dataset/val -ns NUM_SHARDS
 ```
 
 ## Model Selection
 
+Select model in `_1_std_headers.py`
+
 ## Setting data paths and model hyper-parameters
+
+Set training hyperparameters in `_1_std_headers.py`
 
 ## Model Training
 
+```shell
+$ python _9_training.py
+```
+
+### Training Tracking with TensorBoard
+
+```shell
+$ tensorboard --logdir=logs/ --port=PORT_NUM
+```
+
 ## Model Testing
+
+```shell
+$ python _10_testing.py
+```
