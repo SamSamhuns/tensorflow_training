@@ -1,7 +1,8 @@
 import os
 import sys
 import math
-import numpy as np
+import glob
+import imageio
 import os.path as osp
 import tensorflow as tf
 from tensorflow.python.client import session
@@ -29,12 +30,20 @@ def image_to_tfexample(img, class_id, height, width, c):
     }))
 
 
-def _get_filenames_and_classes(dataset_dir):
-    photo_filenames = []
-    for filename in os.listdir(dataset_dir):
-        path = osp.join(dataset_dir, filename)
-        photo_filenames.append(path)
-    return photo_filenames
+def _get_img_paths_and_save_cls_map_file(dataset_dir, cls_map_path):
+    img_path_cid_list = []
+
+    class_id = 0
+    with open(os.path.join(cls_map_path), 'w') as f:
+        # for each class/dir
+        for dir_path in glob.glob(osp.join(dataset_dir, "*")):
+            class_name = osp.basename(dir_path)
+            f.write(str(class_id) + "\t" + class_name + "\n")
+            # for each img
+            for img_path in glob.glob(osp.join(dir_path, "*")):
+                img_path_cid_list.append([img_path, class_id])
+            class_id += 1
+    return img_path_cid_list
 
 
 def _get_tfrecord_path(shard_id, tfrecord_dir_path):
@@ -42,27 +51,35 @@ def _get_tfrecord_path(shard_id, tfrecord_dir_path):
     return output_path
 
 
-def _convert_dataset(fnames, tfrecord_dir_path, num_shards):
-    num_per_shard = int(math.ceil(len(fnames) / float(num_shards)))
+def _convert_dataset_to_tfr(img_path_cid_list, tfrecord_dir_path, num_shards):
+    num_files = len(img_path_cid_list)
+    num_per_shard = int(math.ceil(num_files / float(num_shards)))
     with tf.Graph().as_default(), session.Session():
+        fail_count = 0
         for shard_id in range(num_shards):
             output_tfr_path = _get_tfrecord_path(
                 shard_id, tfrecord_dir_path=tfrecord_dir_path)
             options = tf.io.TFRecordOptions()
             with tf.io.TFRecordWriter(output_tfr_path, options=options) as tfrecord_writer:
                 start_ndx = shard_id * num_per_shard
-                end_ndx = min((shard_id + 1) * num_per_shard, len(fnames))
+                end_ndx = min((shard_id + 1) * num_per_shard, num_files)
                 for i in range(start_ndx, end_ndx):
-                    sys.stdout.write(
-                        '\r>> Writing record %d/%d in shard %d' % (i + 1, len(fnames), shard_id + 1))
-                    sys.stdout.flush()
-                    data = np.load(fnames[i])
-                    img = data['image']
-                    class_id = data['class_id']
-                    height, width, c = img.shape
-                    img = img.tobytes()
-                    example = image_to_tfexample(
-                        img, class_id, height, width, c)
-                    tfrecord_writer.write(example.SerializeToString())
+                    try:
+                        img_path, class_id = img_path_cid_list[i]
+                        img = imageio.imread(img_path, pilmode="RGB")
+                        img = img[..., :3]  # drop alpha channel
+
+                        height, width, c = img.shape
+                        img = img.tobytes()
+                        example = image_to_tfexample(
+                            img, class_id, height, width, c)
+                        tfrecord_writer.write(example.SerializeToString())
+                        sys.stdout.write(f'\r>> Wrote record {i+1}/{num_files} in shard {shard_id+1}')
+                        sys.stdout.flush()
+                    except Exception as e:
+                        fail_count += 1
+                        print(f"{e}. imageio could not read file {img_path}")
+        if fail_count > 0:
+            print(f"\n{fail_count} imgs could not read by imageio")
     sys.stdout.write('\n')
     sys.stdout.flush()

@@ -32,25 +32,16 @@ $ python data_preparation/_1_create_train_val_test_split.py -rd data/duplicated_
 $ bash data/count_files_per_subdir.sh data/split_bird_dataset
 ```
 
-### Convert Data to npz
-
-```shell
-# convert train data to npz
-$ python data_preparation/_2_convert_imgs_to_npz.py -rd data/split_bird_dataset/train -nd data/npz_bird_dataset/train -cp data/bird_dataset_classmap.txt
-# convert val data to npz
-$ python data_preparation/_2_convert_imgs_to_npz.py -rd data/split_bird_dataset/val -nd data/npz_bird_dataset/val -cp data/bird_dataset_classmap.txt
-```
-
-Note: test dataset is not converted to npz or tfrecord as fast-loading is not a priority as we only run through the test data once.
-
 ### Convert Data to tfrecords
 
 ```shell
-# convert train npz files into train tfrecord, select NUM_SHARDS so that each shard has around 200 imgs
-$ python data_preparation/_3_convert_npz_to_tfrecord.py -nd data/npz_bird_dataset/train -td data/tfrecord_bird_dataset/train -ns NUM_SHARDS
-# convert val npz files into val tfrecord, select NUM_SHARDS so that each shard has around 200 imgs
-$ python data_preparation/_3_convert_npz_to_tfrecord.py -nd data/npz_bird_dataset/val -td data/tfrecord_bird_dataset/val -ns NUM_SHARDS
+# convert train npz files into train tfrecord, select NUM_SHARDS so that each shard has a size of 100 MB+
+$ python data_preparation/_2_convert_imgs_to_tfrecord.py -id data/split_bird_dataset/train -td data/tfrecord_bird_dataset/train -cp CLASS_MAP_TXT_PATH -ns NUM_SHARDS
+# convert val npz files into val tfrecord, select NUM_SHARDS so that each shard has a size of 100 MB+
+$ python data_preparation/_2_convert_imgs_to_tfrecord.py -id data/split_bird_dataset/val -td data/tfrecord_bird_dataset/val -cp CLASS_MAP_TXT_PATH -ns NUM_SHARDS
 ```
+
+Note: test dataset is not converted to tfrecord as fast-loading is not a priority as we only run through the test data once.
 
 ## Model Selection
 

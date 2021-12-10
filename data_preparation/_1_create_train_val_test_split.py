@@ -34,25 +34,39 @@ random.seed(42)
 # ###################################################################
 
 
-def create_dir_and_copy_files(dir: str, f_list: List[str]) -> None:
+def create_dir_and_copy_files(dir: str, fpath_list: List[str]) -> None:
     """dir: directory where files will be copied to
-    f_list: list of files which will be copied to dir
+    fpath_list: list of file paths which will be copied to dir
     """
     os.makedirs(dir, exist_ok=True)
-    for file in f_list:
+    for file in fpath_list:
         shutil.copy(file, dir)
 
 
+def write_fpaths_to_file(fpath_list, txt_path, mode='w'):
+    """
+    Write fpaths in fpath_list to txt_path
+    """
+    with open(txt_path, mode) as fp:
+        [fp.write(path + '\n') for path in fpath_list]
+
+
 def split_train_test(raw_img_dir, splitted_img_dir, val_split, test_split) -> None:
-    train_dir = os.path.join(splitted_img_dir, "train")
+    train_dir = osp.join(splitted_img_dir, "train")
     os.makedirs(train_dir, exist_ok=True)
 
+    train_info_txt = osp.join(splitted_img_dir, "train_paths.txt")
+    write_fpaths_to_file([], train_info_txt)  # create empty train_paths.txt
     if val_split is not None:
-        val_dir = os.path.join(splitted_img_dir, "val")
+        val_dir = osp.join(splitted_img_dir, "val")
+        val_info_txt = osp.join(splitted_img_dir, "val_paths.txt")
+        write_fpaths_to_file([], val_info_txt)  # create empty val_paths.txt
         os.makedirs(val_dir, exist_ok=True)
     if test_split is not None:
-        test_dir = os.path.join(splitted_img_dir, "test")
+        test_dir = osp.join(splitted_img_dir, "test")
+        test_info_txt = osp.join(splitted_img_dir, "test_paths.txt")
         os.makedirs(test_dir, exist_ok=True)
+        write_fpaths_to_file([], test_info_txt)  # create empty test_paths.txt
 
     dir_list = glob.glob(osp.join(raw_img_dir, "*"))
 
@@ -64,25 +78,25 @@ def split_train_test(raw_img_dir, splitted_img_dir, val_split, test_split) -> No
                   if file.split(".")[-1] in VALID_FILE_EXTS]
         random.shuffle(f_list)
 
-        train = []
         val_size, test_size = 0, 0
         if val_split is not None:
-            # get val size
             val_size = int(len(f_list) * val_split)
-            val = [f_list[i] for i in range(val_size)]
-            class_val_dir = os.path.join(val_dir, class_name)
-            create_dir_and_copy_files(class_val_dir, val)
+            val_paths = [f_list[i] for i in range(val_size)]
+            class_val_dir = osp.join(val_dir, class_name)
+            create_dir_and_copy_files(class_val_dir, val_paths)
+            write_fpaths_to_file(val_paths, val_info_txt, mode='a')
         if test_split is not None:
-            # get test size
             test_size = int(len(f_list) * test_split)
-            test = [f_list[i + val_size] for i in range(test_size)]
-            class_test_dir = os.path.join(test_dir, class_name)
-            create_dir_and_copy_files(class_test_dir, test)
+            test_paths = [f_list[i + val_size] for i in range(test_size)]
+            class_test_dir = osp.join(test_dir, class_name)
+            create_dir_and_copy_files(class_test_dir, test_paths)
+            write_fpaths_to_file(test_paths, test_info_txt, mode='a')
 
-        train = [f_list[val_size + test_size + i]
-                 for i in range(len(f_list) - (val_size + test_size))]
-        class_train_dir = os.path.join(train_dir, class_name)
-        create_dir_and_copy_files(class_train_dir, train)
+        train_paths = [f_list[val_size + test_size + i]
+                       for i in range(len(f_list) - (val_size + test_size))]
+        class_train_dir = osp.join(train_dir, class_name)
+        create_dir_and_copy_files(class_train_dir, train_paths)
+        write_fpaths_to_file(train_paths, train_info_txt, mode='a')
 
 
 def main():

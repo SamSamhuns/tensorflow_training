@@ -2,7 +2,7 @@ import tensorflow as tf
 
 
 def get_facenet_model(classes=100,
-                      checkpoint_path="custom_model/facenet_weights/facenet_keras.h5",
+                      checkpoint_path="custom_models/facenet_weights/facenet_keras.h5",
                       train_final_clsf_layer_only=False,
                       num_final_dense_layers=1,
                       **kwargs):
