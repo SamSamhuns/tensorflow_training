@@ -1,0 +1,126 @@
+{
+  "name": "Image_Classification",
+  "resume_checkpoint": null,
+  "arch": "Facenet",
+  "trainer": {
+    "epochs": 5,
+    "num_workers": 100,
+    "save_dir": "checkpoints",
+    "save_and_val_freq": 1,
+    "verbosity": "auto",
+    "use_tensorboard": true
+  },
+  "tester": {
+    "model_test_ckpt": "checkpoints/inference_model",
+    "class_map_txt_path": "data/bird_dataset_classmap.txt"
+  },
+  "data": {
+    "train_data_dir": "data/sample_tfrecord_bird_dataset/train",
+    "val_data_dir": "data/sample_tfrecord_bird_dataset/val",
+    "test_data_dir": "data/sample_tfrecord_bird_dataset/test",
+    "train_bsize": 32,
+    "val_bsize": 32,
+    "tfrecord_parallel_read": 20,
+    "shuffle": true,
+    "validation_split": 0,
+    "num_classes": 265,
+    "total_training_samples": 10000
+  },
+  "optimizer": {
+    "type": "SGD",
+    "args": {
+      "learning_rate": 0.01,
+      "decay": 1e-6,
+      "momentum": 0.9,
+      "nesterov": false
+    }
+  },
+  "loss": {
+    "categorical_crossentropy": {
+      "type": "CategoricalCrossentropy",
+      "args": {
+        "label_smoothing": 0.0
+      }
+    }
+  },
+  "loss_weights": [1.0],
+  "train_metrics": {
+    "accuracy": {
+      "type": "CategoricalAccuracy",
+      "args": {}
+    }
+  },
+  "test_metrics": {
+    "accuracy": {
+      "type": "CategoricalAccuracy",
+      "args": {}
+    },
+    "accuracy_top_3": {
+      "type": "TopKCategoricalAccuracy",
+      "args": {
+        "k": 3
+      }
+    }
+  },
+  "callbacks": {
+    "tensorboard_callback": {
+      "type": "LRTensorBoard",
+      "args": {
+        "write_images": false,
+        "histogram_freq": 0,
+        "profile_batch": 0,
+        "write_graph": false,
+        "update_freq": "epoch",
+        "embeddings_freq": 0,
+        "embeddings_metadata": null
+      }
+    },
+    "ckpt_callback": {
+      "type": "ModelCheckpoint",
+      "args": {
+        "monitor": "val_loss",
+        "verbose": 0,
+        "save_best_only": true,
+        "save_weights_only": false,
+        "mode": "auto"
+      }
+    },
+    "lr_reduce_callback": {
+      "type": "ReduceLROnPlateau",
+      "args": {
+        "monitor": "val_loss",
+        "factor": 0.1,
+        "patience": 5,
+        "verbose": 1,
+        "mode": "auto",
+        "min_delta": 0.001,
+        "cooldown": 0,
+        "min_lr": 0
+      }
+    }
+  },
+  "optimization": {
+    "cluster": {
+      "use_clustering": false,
+      "cluster_layers": false,
+      "is_model_already_clustered": false,
+      "num_clusters": 4,
+      "CentroidInitialization": "clustering.keras.CentroidInitialization.DENSITY_BASED",
+      "cluster_layer_names": ["conv2d_1"]
+    },
+    "quantize": {
+      "use_quantization": false,
+      "during_training_quantization": false,
+      "quantize_layers": false,
+      "post_training_quantization": false,
+      "is_model_already_quantized": false,
+      "quantize_layer_names": ["conv2d_1"]
+    },
+    "prune": {
+      "use_pruning": false,
+      "prune_layers": false,
+      "is_model_already_pruned": false,
+      "prune_layer_names": ["conv2d_1"]
+    }
+  }
+}

@@ -1,5 +1,6 @@
 easydict==1.9
 imageio==2.13.1
+python-dotenv==0.19.2
 tensorflow==2.6.2
 tensorflow-model-optimization==0.7.0
 tqdm==4.62.3
