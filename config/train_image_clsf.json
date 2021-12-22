@@ -11,7 +11,6 @@
     "use_tensorboard": true
   },
   "tester": {
-    "model_test_ckpt": "checkpoints/inference_model",
     "class_map_txt_path": "data/bird_dataset_classmap.txt"
   },
   "data": {

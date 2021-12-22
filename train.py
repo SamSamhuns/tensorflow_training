@@ -58,22 +58,29 @@ def train(config):
                     ["callbacks", cb_obj_name], tf.keras.callbacks)
             callbacks.append(callback)
 
-        if config["resume_checkpoint"] is not None:
-            print("Warm starting from " + config["resume_checkpoint"])
-            with (tfmot.quantization.keras.quantize_scope(),
-                  tfmot.clustering.keras.cluster_scope(),
-                  tfmot.sparsity.keras.prune_scope()):
-                model = tf.keras.models.load_model(config["resume_checkpoint"])
-            # To change anything except learning rate, recompilation is required
-            model.optimizer.lr = config["optimizer"]["args"]["learning_rate"]
-            model, callbacks = optimize_model(
-                model, loss, optimizer, loss_weights, metrics, callbacks)
-        else:
+        # precedence is given to cli -r/--resume over json config resume_checkpoint
+        resume_ckpt = None
+        if config.resume is not None:
+            resume_ckpt = config.resume
+        elif config.resume is None and config["resume_checkpoint"] is not None:
+            resume_ckpt = config["resume_checkpoint"]
+
+        if resume_ckpt is None:
             print("Cold Starting")
             model = get_model(config)
             tf.config.optimizer.set_jit(True)
             model.compile(optimizer=optimizer, loss=loss,
                           loss_weights=loss_weights, metrics=metrics)
+        else:
+            print("Warm starting from " + resume_ckpt)
+            with (tfmot.quantization.keras.quantize_scope(),
+                  tfmot.clustering.keras.cluster_scope(),
+                  tfmot.sparsity.keras.prune_scope()):
+                model = tf.keras.models.load_model(resume_ckpt)
+            # To change anything except learning rate, recompilation is required
+            model.optimizer.lr = config["optimizer"]["args"]["learning_rate"]
+            model, callbacks = optimize_model(
+                model, loss, optimizer, loss_weights, metrics, callbacks)
         model.summary()
         start_time = datetime.today().timestamp()
         model.fit(train_input_fn(config),
@@ -88,7 +95,7 @@ def train(config):
 
         # print model input, output shapes
         try:
-            loaded_model = tf.saved_model.load(
+            loaded_model = tf.keras.models.load_model(
                 config.save_dir / "retrain_model")
             infer = loaded_model.signatures["serving_default"]
             print(infer.structured_input_signature)
@@ -98,11 +105,11 @@ def train(config):
 
 
 def main():
-    args = argparse.ArgumentParser(description='PyTorch Template')
+    args = argparse.ArgumentParser(description='Tensorflow Training')
     args.add_argument('-c', '--config', default="config/train_image_clsf.json", type=str,
                       help='config file path (default: %(default)s)')
     args.add_argument('-r', '--resume', default=None, type=str,
-                      help='path to latest checkpoint (default: %(default)s)')
+                      help='path to resume ckpt. Ovverides `resume_checkpoint` in config. (default: %(default)s)')
     config = ConfigParser.from_args(args)
     train(config)
 
