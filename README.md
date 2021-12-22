@@ -43,28 +43,26 @@ $ python data_preparation/_2_convert_imgs_to_tfrecord.py -id data/split_bird_dat
 
 Note: test dataset is not converted to tfrecord as fast-loading is not a priority as we only run through the test data once.
 
-## Model Selection
+## Selecting model, data paths and model hyper-parameters
 
-Select model in `_1_std_headers.py`
-
-## Setting data paths and model hyper-parameters
-
-Set training hyperparameters in `_1_std_headers.py`
+Configure all values in the `JSON` files inside the `config` dir. A sample config file is provided for training on the bird dataset in `config/train_image_clsf.json`.
 
 ## Model Training
 
 ```shell
-$ python _9_training.py
+$ python train.py -c CONFIG_JSON_PATH [-r RESUME_CHECKPOINT_PATH]
 ```
+
+Note: Using the `-r` option while training will override the `resume_checkpoint` param in `CONFIG_FILE.json` if this param is not null.
 
 ### Training Tracking with TensorBoard
 
 ```shell
-$ tensorboard --logdir=logs/ --port=PORT_NUM
+$ tensorboard --logdir=checkpoints/tf_logs/ --port=PORT_NUM
 ```
 
 ## Model Testing
 
 ```shell
-$ python _10_testing.py
+$ python test.py -c CONFIG_JSON_PATH -r TEST_CHECKPOINT_PATH
 ```
