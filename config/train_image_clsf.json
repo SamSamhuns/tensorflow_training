@@ -2,11 +2,12 @@
   "name": "Image_Classification",
   "resume_checkpoint": null,
   "arch": "Facenet",
+  "trainable_feat_backbone": true,
   "trainer": {
     "epochs": 5,
     "num_workers": 100,
     "save_dir": "checkpoints",
-    "save_and_val_freq": 1,
+    "val_freq": 1,
     "verbosity": "auto",
     "use_tensorboard": true
   },
@@ -46,18 +47,60 @@
   "train_metrics": {
     "accuracy": {
       "type": "CategoricalAccuracy",
-      "args": {}
+      "args": {
+        "name": "accuracy"
+      }
     }
   },
   "test_metrics": {
     "accuracy": {
-      "type": "CategoricalAccuracy",
+      "type": "accuracy",
       "args": {}
     },
+    "accuracy_top_2": {
+      "type": "top_k_acc",
+      "args": {
+        "k": 2
+      }
+    },
     "accuracy_top_3": {
-      "type": "TopKCategoricalAccuracy",
+      "type": "top_k_acc",
       "args": {
         "k": 3
+      }
+    },
+    "accuracy_top_4": {
+      "type": "top_k_acc",
+      "args": {
+        "k": 4
+      }
+    },
+    "accuracy_top_5": {
+      "type": "top_k_acc",
+      "args": {
+        "k": 5
+      }
+    },
+    "acc_per_class": {
+      "type": "acc_per_class",
+      "args": {}
+    },
+    "precision": {
+      "type": "precision",
+      "args": {
+        "average": "weighted"
+      }
+    },
+    "recall": {
+      "type": "recall",
+      "args": {
+        "average": "weighted"
+      }
+    },
+    "f1score": {
+      "type": "f1score",
+      "args": {
+        "average": "weighted"
       }
     }
   },
@@ -78,6 +121,7 @@
       "type": "ModelCheckpoint",
       "args": {
         "monitor": "val_loss",
+        "save_freq": "epoch",
         "verbose": 0,
         "save_best_only": true,
         "save_weights_only": false,
@@ -96,6 +140,10 @@
         "cooldown": 0,
         "min_lr": 0
       }
+    },
+    "epoch_log_lambda_callback": {
+      "type": "LambdaCallback",
+      "args": {}
     }
   },
   "optimization": {

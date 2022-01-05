@@ -86,7 +86,7 @@ class ConfigParser:
         Raise IndexError if key_name is absent in dict or
         raise ValueError if key_list contains keys missing in config or non-dict objs
 
-        config._get_dict_key_val(['a', 'b'], 'foo') == conifg['a']['b']['foo']
+        config._get_dict_key_val(['a', 'b'], 'foo') == config['a']['b']['foo']
         if config has a sub-dict element like {'a': {'b': 'foo': 'bar'}, ...}
         """
         def _recursive_get(dct, idx):
@@ -144,7 +144,7 @@ class ConfigParser:
         """Access items like ordinary dict."""
         return self.config[name]
 
-    def get_logger(self, name, verbosity=2):
+    def get_logger(self, name, verbosity=1):
         msg_verbosity = 'verbosity option {} is invalid. Valid options are {}.'.format(
             verbosity, self.log_levels.keys())
         assert verbosity in self.log_levels, msg_verbosity
