@@ -15,7 +15,6 @@ model_info_dict = {
              'input_shape': (160, 160, 3),
              'weights': "model_store/facenet_weights/facenet_keras.h5",
          },
-         'trainable_feat_ext': True,
          'gives_logits': False,
          'parent_module': facenet,
          'module': facenet.load_facenet_model,
@@ -28,7 +27,6 @@ model_info_dict = {
              'weights': None,
              'pooling': None
          },
-         'trainable_feat_ext': True,
          'gives_logits': False,
          'parent_module': tf.keras.applications.densenet,
          'module': tf.keras.applications.DenseNet121,
@@ -41,7 +39,6 @@ model_info_dict = {
              'weights': None,
              'pooling': None
          },
-         'trainable_feat_ext': True,
          'gives_logits': False,
          'parent_module': tf.keras.applications.efficientnet,
          'module': tf.keras.applications.EfficientNetB4,
@@ -54,7 +51,6 @@ model_info_dict = {
              'weights': None,
              'pooling': None
          },
-         'trainable_feat_ext': True,
          'gives_logits': False,
          'parent_module': tf.keras.applications.efficientnet,
          'module': tf.keras.applications.EfficientNetB6,
@@ -67,7 +63,6 @@ model_info_dict = {
              'weights': None,
              'pooling': None
          },
-         'trainable_feat_ext': True,
          'gives_logits': False,
          'parent_module': tf.keras.applications.inception_resnet_v2,
          'module': tf.keras.applications.InceptionResNetV2,
@@ -80,7 +75,6 @@ model_info_dict = {
              'weights': None,
              'pooling': None
          },
-         'trainable_feat_ext': True,
          'gives_logits': False,
          'parent_module': tf.keras.applications.inception_v3,
          'module': tf.keras.applications.InceptionV3,
@@ -93,7 +87,6 @@ model_info_dict = {
              'weights': None,
              'pooling': None
          },
-         'trainable_feat_ext': True,
          'gives_logits': False,
          'parent_module': tf.keras.applications.mobilenet_v2,
          'module': tf.keras.applications.MobileNetV2,
@@ -106,7 +99,6 @@ model_info_dict = {
              'weights': None,
              'pooling': None
          },
-         'trainable_feat_ext': True,
          'gives_logits': False,
          'parent_module': tf.keras.applications.mobilenet_v3,
          'module': tf.keras.applications.MobileNetV3Large,
@@ -119,7 +111,6 @@ model_info_dict = {
              'weights': None,
              'pooling': None
          },
-         'trainable_feat_ext': True,
          'gives_logits': False,
          'parent_module': tf.keras.applications.xception,
          'module': tf.keras.applications.Xception,

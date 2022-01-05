@@ -6,23 +6,6 @@ def load_facenet_model(input_shape, classes, weights):
     Returns a tf.keras.models.Model with an input_shape of (160, 160, 3)
     """
     model = tf.keras.models.load_model(weights, compile=True)
-    # # add classification heads
-    # num_final_dense_layers = 1
-    # if num_final_dense_layers == 2:
-    #     out1 = tf.keras.layers.Dense(
-    #         256,
-    #         activation='relu',
-    #         name='final_dense_1')(model.layers[-1].output)
-    #     final_out = tf.keras.layers.Dense(
-    #         classes,
-    #         activation='softmax',
-    #         name='final_dense_2')(out1)
-    # elif num_final_dense_layers == 1:
-    #     final_out = tf.keras.layers.Dense(
-    #         classes,
-    #         activation='softmax',
-    #         name='final_dense_1')(model.layers[-1].output)
-    # return tf.keras.models.Model(inputs=model.inputs, outputs=[final_out], name="facenet")
     return model
 
 
