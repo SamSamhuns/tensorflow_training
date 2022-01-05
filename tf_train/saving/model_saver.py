@@ -1,3 +1,4 @@
+import logging
 from functools import partial
 
 import tensorflow as tf
@@ -27,10 +28,10 @@ def print_flops_n_train_tm(model, model_savepath, train_time):
     train_time %= 60
     secs = train_time
 
-    print(f"Printing stats for model at {model_savepath}")
-    print(f"\tTotal Flops : {get_flops(model_savepath)}")
-    print(f"\tTraining Time: {day}:{hour}:{mins}:{secs} (d:h:m:s)")
-    print(f"\tTotal Parameters: {model.count_params()}")
+    logging.info(f"Printing stats for model at {model_savepath}")
+    logging.info(f"\tTotal Flops : {get_flops(model_savepath)}")
+    logging.info(f"\tTraining Time: {day}:{hour}:{mins}:{secs} (d:h:m:s)")
+    logging.info(f"\tTotal Parameters: {model.count_params()}")
 
 
 def save_model(model, train_time, config):
@@ -39,7 +40,14 @@ def save_model(model, train_time, config):
 
     # tf.lite.OpsSet.SELECT_TF_OPS
     # Add the above line to to make lite models support tf ops. Binary size will increase.
-    if config["quantize"]["during_training_quantization"] or config["quantize"]["quantize_layers"]:
+    during_train_qnt = config["optimization"]["quantize"]["during_training_quantization"]
+    post_train_qtn = config["optimization"]["quantize"]["post_training_quantization"]
+    qtn_layers = config["optimization"]["quantize"]["quantize_layers"]
+    use_clustering = config["optimization"]["cluster"]["use_clustering"]
+    cluster_layers = config["optimization"]["cluster"]["cluster_layers"]
+    prune_layers = config["optimization"]["prune"]["prune_layers"]
+
+    if (during_train_qnt or qtn_layers):
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
         model1 = converter.convert()
         with open(config.save_dir / "qa.tflite", "wb") as f:
@@ -49,10 +57,11 @@ def save_model(model, train_time, config):
         tf.keras.models.save_model(model, retrain_path, include_optimizer=True)
         tf.keras.models.save_model(model, infer_path, include_optimizer=False)
         print_flops_n_train_tm(model, infer_path, train_time)
-    elif config["quantize"]["post_training_quantization"]:
+    elif post_train_qtn:
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
-        converter.representative_dataset = partial(repr_data_gen, config=config)
+        converter.representative_dataset = partial(
+            repr_data_gen, config=config)
         # Option 1
         # converter.target_spec.supported_types = [tf.float16]
         # Option 2
@@ -62,7 +71,7 @@ def save_model(model, train_time, config):
         model1 = converter.convert()
         with open(config.save_dir / "ptq.tflite", "wb") as f:
             f.write(model1)
-    elif config["cluster"]["clustering"] or config["cluster"]["cluster_layers"]:
+    elif use_clustering or cluster_layers:
         retrain_path /= "cluster_retrain_model"
         infer_path /= "cluster_infer_model"
         tf.keras.models.save_model(model, retrain_path, include_optimizer=True)
@@ -75,7 +84,8 @@ def save_model(model, train_time, config):
         with open(config.save_dir / "cluster.tflite", "wb") as f:
             f.write(model1)
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
-        converter.representative_dataset = partial(repr_data_gen, config=config)
+        converter.representative_dataset = partial(
+            repr_data_gen, config=config)
         # Option 1
         # converter.target_spec.supported_types = [tf.float16]
         # Option 2
@@ -85,7 +95,7 @@ def save_model(model, train_time, config):
         model1 = converter.convert()
         with open(config.save_dir / "cluster_ptq.tflite", "wb") as f:
             f.write(model1)
-    elif config["prune"]["prune_layers"]:
+    elif prune_layers:
         retrain_path /= "prune_retrain_model"
         infer_path /= "prune_infer_model"
         tf.keras.models.save_model(model, retrain_path, include_optimizer=True)
@@ -98,7 +108,8 @@ def save_model(model, train_time, config):
         with open(config.save_dir / "prune.tflite", "wb") as f:
             f.write(model1)
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
-        converter.representative_dataset = partial(repr_data_gen, config=config)
+        converter.representative_dataset = partial(
+            repr_data_gen, config=config)
         # Option 1
         # converter.target_spec.supported_types = [tf.float16]
         # Option 2
