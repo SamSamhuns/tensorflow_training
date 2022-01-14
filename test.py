@@ -25,7 +25,7 @@ def get_class_name_list(mapping_file):
 
 
 def test(config):
-    logger = config.get_logger('train')
+    logger = config.get_logger('test')
 
     model = tf.keras.models.load_model(config.resume)
     h, w, _ = config.model.args.input_shape

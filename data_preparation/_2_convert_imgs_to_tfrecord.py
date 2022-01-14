@@ -26,10 +26,10 @@ def convert_to_tfrecord(img_dir_path, tfrecord_dir_path, cls_map_path, num_shard
 def main():
     parser = argparse.ArgumentParser("""
         Convert img dataset into npz files with embedded class label info:
-        eg. python _2_convert_dataset_to_npz -id data/split_bird_dataset/train
+        eg. python _2_convert_dataset_to_npz -sd data/split_bird_dataset/train
                                              -td data/tfrecord_bird_dataset/train
                                              -ns 100""")
-    parser.add_argument('-id', '--img_dir_path',
+    parser.add_argument('-sd', '--source_dir_path',
                         type=str, required=True,
                         help="Source img dir path containing img files organized into subdirs with class names")
     parser.add_argument('-td', '--tfrecord_dir_path',
@@ -42,7 +42,7 @@ def main():
                         type=int, default=100,
                         help="Num of tfrecord shards. Ideally there should be approx 200 imgs per shard. (default %(default)s)")
     args = parser.parse_args()
-    img_path = args.img_dir_path
+    img_path = args.source_dir_path
     tfr_path = args.tfrecord_dir_path
     cls_map_path = args.class_map_txt_path
     num_shards = args.num_shards

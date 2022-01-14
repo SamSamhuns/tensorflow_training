@@ -8,7 +8,7 @@ import os.path as osp
 VALID_FILE_EXTS = {'jpg', 'jpeg', 'JPEG', 'png'}
 
 # #################### Data Organization ############################
-#   raw_data
+#   source_data
 #          |_ dataset
 #                   |_ class_1
 #                             |_ img1
@@ -43,13 +43,13 @@ def safe_copy(file_path, out_dir, dst=None):
             out_dir, '{}_{}{}'.format(base, i, extension)))
 
 
-def duplicate_data_dir(raw_img_dir, duplicated_img_dir, target_number):
+def duplicate_data_dir(source_img_dir, duplicated_img_dir, target_number):
     target_dir = duplicated_img_dir
     os.makedirs(target_dir, exist_ok=True)
 
-    dir_list = glob.glob(osp.join(raw_img_dir, "*"))
+    dir_list = glob.glob(osp.join(source_img_dir, "*"))
 
-    # for each class in raw data
+    # for each class in source data
     for dir_path in tqdm(dir_list):
         class_name = dir_path.split("/")[-1]  # get class name
         f_list = [file for file in sorted(glob.glob(osp.join(dir_path, "*")))
@@ -73,7 +73,7 @@ def duplicate_data_dir(raw_img_dir, duplicated_img_dir, target_number):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-rd', '--raw_data_path',
+    parser.add_argument('-sd', '--source_data_path',
                         type=str, required=True,
                         help="Path with class imgs inside subdirs")
     parser.add_argument('-td', '--target_data_path',
@@ -85,7 +85,7 @@ def main():
                         If class has more imgs than target_number, only target_number imgs are copied.
                         (default : %(default)s)""")
     args = parser.parse_args()
-    duplicate_data_dir(args.raw_data_path,
+    duplicate_data_dir(args.source_data_path,
                        args.target_data_path,
                        args.target_number)
 

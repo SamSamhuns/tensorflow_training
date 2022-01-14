@@ -146,7 +146,7 @@ def train_input_fn(config, bsize=None):
                           num_parallel_calls=tf.data.experimental.AUTOTUNE)
     dataset = dataset.batch(bsize, drop_remainder=False)
     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
-    dataset = dataset.cache()
+    # dataset = dataset.cache()
     # dataset = dataset.repeat()
     dataset = dataset.shuffle(bsize * 4, reshuffle_each_iteration=True)
     return dataset

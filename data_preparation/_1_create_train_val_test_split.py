@@ -12,8 +12,8 @@ import os.path as osp
 from typing import List
 
 
-# #################### Raw Data Organization #########################
-#   raw_data
+# ################### Source Data Organization ######################
+#   source_data
 #          |_ dataset
 #                   |_ class_1
 #                             |_ img1
@@ -27,7 +27,7 @@ from typing import List
 # ###################################################################
 
 # #################### Data Configurations here #####################
-# example raw data path = "data/sample_bird_dataset"
+# example source data path = "data/sample_bird_dataset"
 # example target data path = "data/split_bird_dataset"
 VALID_FILE_EXTS = {'jpg', 'jpeg', 'JPEG', 'png'}
 random.seed(42)
@@ -51,7 +51,7 @@ def write_fpaths_to_file(fpath_list, txt_path, mode='w'):
         [fp.write(path + '\n') for path in fpath_list]
 
 
-def split_train_test(raw_img_dir, splitted_img_dir, val_split, test_split) -> None:
+def split_train_test(source_img_dir, splitted_img_dir, val_split, test_split) -> None:
     train_dir = osp.join(splitted_img_dir, "train")
     os.makedirs(train_dir, exist_ok=True)
 
@@ -68,9 +68,9 @@ def split_train_test(raw_img_dir, splitted_img_dir, val_split, test_split) -> No
         os.makedirs(test_dir, exist_ok=True)
         write_fpaths_to_file([], test_info_txt)  # create empty test_paths.txt
 
-    dir_list = glob.glob(osp.join(raw_img_dir, "*"))
+    dir_list = glob.glob(osp.join(source_img_dir, "*"))
 
-    # for each class in raw data
+    # for each class in source data
     for dir_path in tqdm(dir_list):
         class_name = dir_path.split("/")[-1]  # get class name
 
@@ -108,9 +108,9 @@ def main():
                 Split dataset into train, val, and test.
                 If val and test split percentages are not provided,
                 default val and test splits are set to 5% and 10% resp.""")
-    parser.add_argument('-rd', '--raw_data_path',
+    parser.add_argument('-sd', '--source_data_path',
                         type=str, required=True,
-                        help="""Raw dataset path with
+                        help="""source dataset path with
                         class imgs inside folders""")
     parser.add_argument('-td', '--target_data_path',
                         type=str, required=True,
@@ -129,7 +129,7 @@ def main():
         args.val_split = 0.05
         args.test_split = 0.10
 
-    split_train_test(args.raw_data_path,
+    split_train_test(args.source_data_path,
                      args.target_data_path,
                      args.val_split,
                      args.test_split)
