@@ -12,3 +12,6 @@ rm -rvf dist
 rm -rvf wheelhouse
 # + at the end means the cmd is executed for all file/dir with matches
 find . -type d -name "__pycache__" -exec rm -r "{}" +
+
+# Removing server inference data cache
+rm -rf .data_cache
