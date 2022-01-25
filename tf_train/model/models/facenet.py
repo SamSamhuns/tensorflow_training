@@ -14,7 +14,7 @@ class FacenetPred(tf.keras.Model):
     Classic fully connected neural network that downsamples features by half every layer
     """
 
-    def __init__(self, num_classes: int, init_units=512, num_final_blocks: int = 1):
+    def __init__(self, num_classes: int, init_units=512, num_final_blocks: int = 2):
         super(FacenetPred, self).__init__()
 
         blocks = []
@@ -24,7 +24,7 @@ class FacenetPred(tf.keras.Model):
             dense = tf.keras.layers.Dense(
                 units,
                 activation='relu')
-            blocks.extend(dense)
+            blocks.append(dense)
             units //= 2
 
         # last classification layer

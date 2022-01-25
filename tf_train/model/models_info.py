@@ -31,6 +31,30 @@ model_info_dict = {
          'parent_module': tf.keras.applications.densenet,
          'module': tf.keras.applications.DenseNet121,
          'final_module': None},
+    'EfficientNetB0':
+        {'type': 'efficientnetb0',
+         'args': {
+             'include_top': True,
+             'input_shape': (224, 224, 3),
+             'weights': None,
+             'pooling': None
+         },
+         'gives_logits': False,
+         'parent_module': tf.keras.applications.efficientnet,
+         'module': tf.keras.applications.EfficientNetB0,
+         'final_module': None},
+    'EfficientNetB2':
+        {'type': 'efficientnetb2',
+         'args': {
+             'include_top': True,
+             'input_shape': (260, 260, 3),
+             'weights': None,
+             'pooling': None
+         },
+         'gives_logits': False,
+         'parent_module': tf.keras.applications.efficientnet,
+         'module': tf.keras.applications.EfficientNetB2,
+         'final_module': None},
     'EfficientNetB4':
         {'type': 'efficientnetb4',
          'args': {
@@ -68,7 +92,7 @@ model_info_dict = {
          'module': tf.keras.applications.InceptionResNetV2,
          'final_module': None},
     'InceptionV3':
-        {'type': 'inceptionV3',
+        {'type': 'inception_v3',
          'args': {
              'include_top': True,
              'input_shape': (299, 299, 3),
