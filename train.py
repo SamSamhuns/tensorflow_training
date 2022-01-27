@@ -69,7 +69,7 @@ def train(config):
                 callback = config.init_obj(
                     ["callbacks", cb_obj_name], tf.keras.callbacks,
                     on_epoch_end=lambda epoch, logs: log_file.write(
-                        f"epoch: {epoch}, loss: {logs['loss']}, accuracy: {logs['accuracy']}" +
+                        f"epoch: {epoch}, loss: {logs['loss']}, accuracy: {logs['accuracy']}, "
                         f"val_loss: {logs['val_loss']}, val_accuracy: {logs['val_accuracy']}\n"),
                     on_train_end=lambda logs: log_file.close())
             else:
@@ -137,7 +137,9 @@ def main():
     args.add_argument('-c', '--config', default="config/train_image_clsf.json", type=str,
                       help='config file path (default: %(default)s)')
     args.add_argument('-r', '--resume', default=None, type=str,
-                      help='path to resume ckpt. Ovverides `resume_checkpoint` in config. (default: %(default)s)')
+                      help='path to resume ckpt. Overrides `resume_checkpoint` in config. (default: %(default)s)')
+    args.add_argument('-id', '--run_id', default="train_" + datetime.now().strftime(r'%Y%m%d_%H%M%S'), type=str,
+                      help='unique identifier for train process. Annotates train ckpts & logs. (default: %(default)s)')
     config = ConfigParser.from_args(args)
     train(config)
 

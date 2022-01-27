@@ -2,8 +2,10 @@
 from dotenv import load_dotenv
 load_dotenv(".env")
 
-import tqdm
 import argparse
+from datetime import datetime
+
+import tqdm
 import numpy as np
 import tensorflow as tf
 import tf_train.metric as module_metric
@@ -78,6 +80,8 @@ def main():
                       help="config file path (default: %(default)s)")
     args.add_argument('-r', '--resume', required=True, type=str,
                       help="path to checkpoint to use for testing")
+    args.add_argument('-id', '--run_id', default="test_" + datetime.now().strftime(r'%Y%m%d_%H%M%S'), type=str,
+                      help='unique identifier for test process. Annotates test logs. (default: %(default)s)')
     config = ConfigParser.from_args(args)
     test(config)
 

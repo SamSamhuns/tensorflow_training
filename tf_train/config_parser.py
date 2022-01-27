@@ -18,7 +18,7 @@ class ConfigParser:
         checkpoint saving and logging module.
         :param config: Dict with configs & HPs to train. contents of `config/train_image_clsf.json` file for example.
         :param resume: String, path to the checkpoint being loaded.
-        :param run_id: Unique Identifier for training processes. Used to save ckpts & training log. Timestamp is used as default
+        :param run_id: Unique Identifier for train & test. Used to save ckpts & training log. Timestamp is used as default
         """
         # set save_dir where trained model and log will be saved.
         save_dir = Path(config['trainer']['save_dir'])
@@ -71,13 +71,14 @@ class ConfigParser:
             args = args.parse_args()
 
         resume = args.resume
+        run_id = args.run_id
         cfg_fname = Path(args.config)
         config = read_json(cfg_fname)
         if args.config and resume:
             # update new config for fine-tuning
             config.update(read_json(args.config))
 
-        return cls(config, resume)
+        return cls(config, resume, run_id)
 
     def _get_val_from_key_list(self, key_list, key_name):
         """

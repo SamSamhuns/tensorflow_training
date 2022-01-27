@@ -62,7 +62,7 @@ Note: test dataset is not converted to tfrecord as fast-loading is not a priorit
 
 ## Selecting model, data paths and model hyper-parameters
 
-Configure all values in the `JSON` files inside the `config` dir. A sample config file is provided for training on the bird dataset in `config/train_image_clsf.json`.
+Configure all values in the `JSON` files inside the `config` dir. A sample config file is provided for training on the bird dataset in `config/train_image_clsf.json`. The model information repository is located at `tf_train/model/models_info.py`.
 
 Set number of GPUs to use and other tensorflow command line env vars in `.env`.
 
