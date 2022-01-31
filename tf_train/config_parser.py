@@ -67,8 +67,7 @@ class ConfigParser:
         """
         Initialize this class from some cli arguments. Used in train, test.
         """
-        if not isinstance(args, tuple):
-            args = args.parse_args()
+        args = args.parse_args()
 
         resume = args.resume
         run_id = args.run_id

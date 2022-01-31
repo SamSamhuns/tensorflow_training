@@ -28,5 +28,5 @@ echo "Starting tf model server with FastAPI and tritonserver in Docker Container
 
 # cd to server dir and create docker file and run dockerfile to start server
 cd server
-bash build_server_docker.sh
-bash run_server_docker.sh -g $gpunumber -p $port
+bash scripts/build_server_docker.sh
+bash scripts/run_server_docker.sh -g $gpunumber -p $port
