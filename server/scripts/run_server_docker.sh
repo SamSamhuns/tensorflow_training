@@ -24,14 +24,12 @@ then
    helpFunction
 fi
 
-echo "$gpunumber"
-echo "$port"
-
 echo "Stopping and removing docker container 'model_server_container' if it is running"
+echo "Ignore No such container Error messages"
 docker stop model_server_container || true
 docker rm model_server_container || true
 
-echo "Docker Container starting with FastAPI port: $port"
+echo "Docker Container starting with port exposed at port: $port on gpu: $gpu"
 docker run \
       --rm \
       --gpus device=$gpunumber \

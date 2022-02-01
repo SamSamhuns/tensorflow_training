@@ -24,7 +24,7 @@ then
    helpFunction
 fi
 
-echo "Starting tf model server with FastAPI and tritonserver in Docker Container exposed on $port"
+echo "Building tf model server image and starting container"
 
 # cd to server dir and create docker file and run dockerfile to start server
 cd server

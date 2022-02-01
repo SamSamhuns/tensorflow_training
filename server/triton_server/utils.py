@@ -9,6 +9,9 @@ import tritonclient.grpc as grpcclient
 from tritonclient.utils import InferenceServerException
 
 
+MAX_FRAMES_TO_GET_FROM_VIDEO = 30
+
+
 class FlagConfig:
     """stores configurations for prediction"""
 
@@ -125,10 +128,7 @@ def extract_data_from_media(FLAGS, preprocess_func, media_filenames):
         elif FLAGS.inference_mode == "video":
             try:
                 cap = cv2.VideoCapture(filename)
-                vid_length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-                fps = cap.get(cv2.CAP_PROP_FPS) - 10  # reduce orig fps by 10
-                if vid_length > 10000:
-                    raise Exception("Video must have less than 10000 frames")
+                fps = round(cap.get(cv2.CAP_PROP_FPS))  # take 1 frame every fps frames
 
                 # check num of channels
                 ret, frame = cap.read()
@@ -140,12 +140,13 @@ def extract_data_from_media(FLAGS, preprocess_func, media_filenames):
                 cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                 orig_vid, vid = [], []
                 i = 0
-                while (cap.isOpened()):
+                while cap.isOpened() and len(vid) <= MAX_FRAMES_TO_GET_FROM_VIDEO:
                     ret, frame = cap.read()
                     if ret:
-                        if FLAGS.result_save_dir is not None:
-                            orig_vid.append(np.copy(frame))
-                        vid.append(preprocess_func(frame))
+                        if i % fps == 0:
+                            if FLAGS.result_save_dir is not None:
+                                orig_vid.append(np.copy(frame))
+                            vid.append(preprocess_func(frame))
                     else:
                         break
                     i += 1
@@ -157,7 +158,7 @@ def extract_data_from_media(FLAGS, preprocess_func, media_filenames):
             except Exception as e:
                 traceback.print_exc()
                 print(f"{e}. Failed to process video {filename}")
-    return image_data, all_req_imgs_orig, all_req_imgs_orig_size, fps
+    return image_data, all_req_imgs_orig, all_req_imgs_orig_size
 
 
 def get_inference_responses(image_data_list, FLAGS, trt_inf_data):

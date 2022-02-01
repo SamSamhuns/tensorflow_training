@@ -4,6 +4,6 @@ tritonserver --model-store triton_server/models --allow-grpc=true --allow-http=f
 P1=$!
 
 #Run FAPI Server on port 8080. Should be 8080 always
-python3 server.py 8080 &
+python3 server.py -p 8080 &
 P2=$!
 wait $P1 $P2

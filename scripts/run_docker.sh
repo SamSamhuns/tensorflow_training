@@ -22,7 +22,11 @@ then
    helpFunction
 fi
 
-echo "Starting tf model training container with tensorboard exposed on port $port"
+echo "Stopping and removing docker container 'tf_train_container' if it is running on port $port"
+echo "Ignore No such container Error messages"
+docker stop tf_train_container || true
+docker rm tf_train_container || true
+
 docker run \
       -ti --rm \
       -p 0.0.0.0:$port:6006 \

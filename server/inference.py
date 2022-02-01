@@ -26,7 +26,7 @@ def postprocess(results, output_names):
         logits = results.as_numpy(output_name)
         softmax_confs = np.exp(logits) / np.sum(np.exp(logits))
         class_idx = np.argmax(logits)
-        if softmax_confs[:, class_idx] >= FLAGS.det_threshold:
+        if softmax_confs[:, class_idx] >= FLAGS.threshold:
             predictions.append(pred_idx_2_classes[class_idx])
 
     if not predictions:
@@ -37,13 +37,13 @@ def postprocess(results, output_names):
 def run_inference(
         input_file,
         model_name,
-        det_threshold,
+        threshold,
         inference_mode="image",
         port=8081,
         debug=True):
     FLAGS.media_filename = input_file
     FLAGS.model_name = model_name
-    FLAGS.det_threshold = det_threshold
+    FLAGS.threshold = threshold
     FLAGS.inference_mode = inference_mode
     FLAGS.debug = debug
     FLAGS.result_save_dir = None  # set to None prevent saving
@@ -66,7 +66,7 @@ def run_inference(
 
     model_info = get_client_and_model_metadata_config(FLAGS)
     if model_info == -1:  # error getting model info
-        return -1
+        raise Exception("Model could not be loaded in the server")
     triton_client, model_metadata, model_config = model_info
 
     # input_name, output_name, format, dtype are all lists
@@ -98,11 +98,10 @@ def run_inference(
     preprocess_dtype = partial(
         preprocess, width=w, height=h, new_type=nptype_dict[dtype[image_input_idx]])
     # all_reqested_images_orig will be [] if FLAGS.result_save_dir is None
-    image_data, all_reqested_images_orig, all_req_imgs_orig_size, fps = extract_data_from_media(
+    image_data, all_reqested_images_orig, all_req_imgs_orig_size = extract_data_from_media(
         FLAGS, preprocess_dtype, filenames)
     if len(image_data) == 0:
-        print("Image data is missing. Aborting inference")
-        return -1
+        raise Exception("Image data is missing. Aborting inference")
 
     trt_inf_data = (triton_client, input_name,
                     output_name, dtype, max_batch_size)
@@ -116,13 +115,15 @@ def run_inference(
     final_result_list = []
     for response in responses:
         pred_classes = postprocess(response, output_name)
-        final_result_list.append([pred_classes])
+        final_result_list.append(pred_classes)
 
         # display boxes on image array
         if FLAGS.result_save_dir is not None:
             drawn_img = all_reqested_images_orig[counter]
             drawn_img = resize_maintaining_aspect(drawn_img, w, h)
         counter += 1
+    if FLAGS.inference_mode == "video":
+        final_result_list = [pred[0] for pred in final_result_list]
     if FLAGS.debug:
         print(f"Time to process {counter} image(s)={time.time()-start_time}")
 
