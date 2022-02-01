@@ -115,9 +115,6 @@ venv.bak/
 *.log.json
 work_dirs/
 
-# python virtual env
-venv
-
 # mac os file
 .DS_Store
 ._.DS_Store
@@ -126,8 +123,10 @@ venv
 data
 
 # checkpoints and logs
-checkpoints
+checkpoints*
 logs
 
 # model files
 *.h5
+*.pb
+model.savedmodel
