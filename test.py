@@ -76,7 +76,7 @@ def test(config):
 
 def main():
     args = argparse.ArgumentParser(description='Tensorflow Testing')
-    args.add_argument('-c', '--config', default="config/train_image_clsf.json", type=str,
+    args.add_argument('-cfg', '--config', default="config/train_image_clsf.json", type=str,
                       help="config file path (default: %(default)s)")
     args.add_argument('-r', '--resume', required=True, type=str,
                       help="path to checkpoint to use for testing")

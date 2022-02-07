@@ -38,9 +38,9 @@ class ConfigParser:
             config["trainer"]["tf_image_logs"] = _ilog
 
         # make directory for saving checkpoints and log.
-        exist_ok = run_id == ''
-        self.save_dir.mkdir(parents=True, exist_ok=exist_ok)
-        self.log_dir.mkdir(parents=True, exist_ok=exist_ok)
+        run_id == ''
+        self.save_dir.mkdir(parents=True, exist_ok=True)
+        self.log_dir.mkdir(parents=True, exist_ok=True)
 
         # dump custom env vars from .env file to config.json
         custom_env_vars = dotenv_values(".env")

@@ -22,7 +22,6 @@
     "val_bsize": 32,
     "tfrecord_parallel_read": 20,
     "shuffle": true,
-    "validation_split": 0,
     "num_classes": 265,
     "total_training_samples": 10000
   },

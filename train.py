@@ -134,7 +134,7 @@ def train(config):
 
 def main():
     args = argparse.ArgumentParser(description='Tensorflow Training')
-    args.add_argument('-c', '--config', default="config/train_image_clsf.json", type=str,
+    args.add_argument('-cfg', '--config', default="config/train_image_clsf.json", type=str,
                       help='config file path (default: %(default)s)')
     args.add_argument('-r', '--resume', default=None, type=str,
                       help='path to resume ckpt. Overrides `resume_checkpoint` in config. (default: %(default)s)')

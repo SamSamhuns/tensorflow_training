@@ -31,7 +31,7 @@ docker rm model_server_container || true
 
 echo "Docker Container starting with port exposed at port: $port on gpu: $gpu"
 docker run \
-      --rm \
+      --rm -d \
       --gpus device=$gpunumber \
       -p 0.0.0.0:$port:8080 \
       --name model_server_container \

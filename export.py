@@ -53,7 +53,7 @@ def main():
         eg. python _2_convert_dataset_to_npz -id data/split_bird_dataset/train
                                              -td data/tfrecord_bird_dataset/train
                                              -ns 100""")
-    parser.add_argument('-c', '--config', required=True, type=str,
+    parser.add_argument('-cfg', '--config', required=True, type=str,
                         help='config file path (default: %(default)s)')
     parser.add_argument('-h5', '--h5_model_path',
                         type=str, required=True,
