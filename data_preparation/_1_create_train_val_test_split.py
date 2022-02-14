@@ -75,7 +75,7 @@ def split_train_test(source_img_dir, splitted_img_dir, val_split, test_split) ->
         class_name = dir_path.split("/")[-1]  # get class name
 
         f_list = [file for file in glob.glob(osp.join(dir_path, "*"))
-                  if file.split(".")[-1] in VALID_FILE_EXTS]
+                  if osp.splitext(file)[1][1:] in VALID_FILE_EXTS]
         random.shuffle(f_list)
 
         val_size, test_size = 0, 0

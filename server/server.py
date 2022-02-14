@@ -165,10 +165,10 @@ if __name__ == '__main__':
                         help='host ip address. (default: %(default)s)')
     parser.add_argument('-p', '--port', type=int, default=8080,
                         help='uvicorn port number. (default: %(default)s)')
-    parser.add_argument('-w', '--workers', type=int, default=1,
+    parser.add_argument('-w', '--workers', type=int, default=50,
                         help="number of uvicorn workers. (default: %(default)s)")
     args = parser.parse_args()
 
     print(
         f"Uvicorn server running on {args.host_ip}:{args.port} with {args.workers} workers")
-    uvicorn.run(app, host=args.host_ip, port=args.port, workers=args.workers)
+    uvicorn.run("server:app", host=args.host_ip, port=args.port, workers=args.workers)

@@ -27,9 +27,9 @@ def _parse_train_fn(example_proto, config):
     image_rgb = tf.image.random_contrast(image_rgb, 0.9, 1.3)
     image_rgb = tf.image.random_jpeg_quality(image_rgb, 75, 100)
     image_rgb = tf.image.random_saturation(image_rgb, 0.6, 1.4)
-    image_rgb = tf.cast(image_rgb, tf.float32, name='cast_input1') / 255.0
-    image_rgb = tf.keras.layers.GaussianNoise(stddev=0.005)(image_rgb, True)
-    image_rgb = tf.cast(image_rgb * 255.0, tf.uint8, name='cast_input1')
+    # image_rgb = tf.cast(image_rgb, tf.float32, name='cast_input1') / 255.0
+    # image_rgb = tf.keras.layers.GaussianNoise(stddev=0.005)(image_rgb, True)  # adds too much noise
+    # image_rgb = tf.cast(image_rgb * 255.0, tf.uint8, name='cast_input1')
     # image_rgb = tf.image.random_flip_up_down(image_rgb) # unrealistic data alteration
     # image_rgb = tf.image.random_hue(image_rgb, 0.9) # significantly alters image, dont use
     in_h, in_w, _ = config.model.args.input_shape

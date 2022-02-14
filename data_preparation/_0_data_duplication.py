@@ -37,10 +37,9 @@ def safe_copy(file_path, out_dir, dst=None):
     else:
         base, extension = osp.splitext(name)
         i = 1
-        while osp.exists(osp.join(out_dir, '{}_{}{}'.format(base, i, extension))):
+        while osp.exists(osp.join(out_dir, f"{base}_{i}{extension}")):
             i += 1
-        shutil.copy(file_path, osp.join(
-            out_dir, '{}_{}{}'.format(base, i, extension)))
+        shutil.copy(file_path, osp.join(out_dir, f"{base}_{i}{extension}"))
 
 
 def duplicate_data_dir(source_img_dir, duplicated_img_dir, target_number):
@@ -53,7 +52,7 @@ def duplicate_data_dir(source_img_dir, duplicated_img_dir, target_number):
     for dir_path in tqdm(dir_list):
         class_name = dir_path.split("/")[-1]  # get class name
         f_list = [file for file in sorted(glob.glob(osp.join(dir_path, "*")))
-                  if file.split(".")[-1] in VALID_FILE_EXTS]
+                  if osp.splitext(file)[1][1:] in VALID_FILE_EXTS]
 
         class_target_dir = osp.join(target_dir, class_name)
         if osp.exists(class_target_dir):
