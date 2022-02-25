@@ -63,11 +63,11 @@ class ConfigParser:
         self.resume = resume
 
     @classmethod
-    def from_args(cls, args):
+    def from_args(cls, parser):
         """
         Initialize this class from some cli arguments. Used in train, test.
         """
-        args = args.parse_args()
+        args = parser.parse_args()
 
         resume = args.resume
         run_id = args.run_id

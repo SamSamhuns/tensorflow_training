@@ -110,7 +110,7 @@ def train(config):
 
         start_time = datetime.today().timestamp()
 
-        model.fit(train_input_fn(config),
+        model.fit(X=train_input_fn(config),
                   initial_epoch=0, epochs=config["trainer"]["epochs"],
                   callbacks=callbacks, verbose=config["trainer"]["verbosity"],
                   validation_data=val_input_fn(config),
@@ -133,14 +133,14 @@ def train(config):
 
 
 def main():
-    args = argparse.ArgumentParser(description='Tensorflow Training')
-    args.add_argument('-cfg', '--config', default="config/train_image_clsf.json", type=str,
-                      help='config file path (default: %(default)s)')
-    args.add_argument('-r', '--resume', default=None, type=str,
-                      help='path to resume ckpt. Overrides `resume_checkpoint` in config. (default: %(default)s)')
-    args.add_argument('-id', '--run_id', default="train_" + datetime.now().strftime(r'%Y%m%d_%H%M%S'), type=str,
-                      help='unique identifier for train process. Annotates train ckpts & logs. (default: %(default)s)')
-    config = ConfigParser.from_args(args)
+    parser = argparse.ArgumentParser(description='Tensorflow Training')
+    parser.add_argument('-cfg', '--config', default="config/train_image_clsf.json", type=str,
+                        help='config file path (default: %(default)s)')
+    parser.add_argument('-r', '--resume', default=None, type=str,
+                        help='path to resume ckpt. Overrides `resume_checkpoint` in config. (default: %(default)s)')
+    parser.add_argument('-id', '--run_id', default="train_" + datetime.now().strftime(r'%Y%m%d_%H%M%S'), type=str,
+                        help='unique identifier for train process. Annotates train ckpts & logs. (default: %(default)s)')
+    config = ConfigParser.from_args(parser)
     train(config)
 
 

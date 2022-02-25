@@ -75,14 +75,14 @@ def test(config):
 
 
 def main():
-    args = argparse.ArgumentParser(description='Tensorflow Testing')
-    args.add_argument('-cfg', '--config', default="config/train_image_clsf.json", type=str,
-                      help="config file path (default: %(default)s)")
-    args.add_argument('-r', '--resume', required=True, type=str,
-                      help="path to checkpoint to use for testing")
-    args.add_argument('-id', '--run_id', default="test_" + datetime.now().strftime(r'%Y%m%d_%H%M%S'), type=str,
-                      help='unique identifier for test process. Annotates test logs. (default: %(default)s)')
-    config = ConfigParser.from_args(args)
+    parser = argparse.ArgumentParser(description='Tensorflow Testing')
+    parser.add_argument('-cfg', '--config', default="config/train_image_clsf.json", type=str,
+                        help="config file path (default: %(default)s)")
+    parser.add_argument('-r', '--resume', required=True, type=str,
+                        help="path to checkpoint to use for testing")
+    parser.add_argument('-id', '--run_id', default="test_" + datetime.now().strftime(r'%Y%m%d_%H%M%S'), type=str,
+                        help='unique identifier for test process. Annotates test logs. (default: %(default)s)')
+    config = ConfigParser.from_args(parser)
     test(config)
 
 
