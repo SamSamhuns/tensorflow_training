@@ -11,7 +11,6 @@ from datetime import datetime
 import av
 import cv2
 import tqdm
-import gzip
 import numpy as np
 
 VALID_FILE_EXTS = {'mp4', 'avi'}
@@ -22,6 +21,8 @@ year, month, day, hour, minute, sec = today.year, today.month, today.day, today.
 os.makedirs("logs", exist_ok=True)
 logging.basicConfig(filename=f'logs/extraction_statistics_{year}{month}{day}_{hour}:{minute}:{sec}.log',
                     level=logging.INFO)
+
+CLASS_NAME_TO_LABEL_DICT = {"class1": 0, "class2": 1}
 
 
 def extract_img_np_arr(video_path, MAX_N_FRAME, reshape_size):
@@ -55,7 +56,9 @@ def extract_and_save_img_np_arr(video_path, npy_path, MAX_N_FRAME, reshape_size)
             h, w = reshape_size
             np_arr = np.concatenate(
                 [np_arr, np.zeros([diff, h, w, 3])], axis=0)
-        np.savez_compressed(file=npy_path, arr=np_arr)
+        cname = video_path.split('/')[-2]
+        label = CLASS_NAME_TO_LABEL_DICT[cname]
+        np.savez_compressed(file=npy_path, image=np_arr, label=label)
     except Exception as e:
         print(e)
         return 0
