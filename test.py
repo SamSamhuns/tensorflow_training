@@ -2,8 +2,10 @@
 from dotenv import load_dotenv
 load_dotenv(".env")
 
+import io
 import argparse
 from datetime import datetime
+from contextlib import redirect_stdout
 
 import tqdm
 import numpy as np
@@ -60,6 +62,13 @@ def test(config):
     # combine dataloader len & bsize axes
     agg_pred = agg_pred.reshape(-1, agg_pred.shape[-1])
     agg_label = agg_label.flatten()
+
+    # stream model summary to logger
+    f = io.StringIO()
+    with redirect_stdout(f):
+        model.summary()
+    model_summary = f.getvalue()
+    logger.info(model_summary)
 
     logger.info(f"Statistics for model: {config.resume}")
     met_val_dict = {}
