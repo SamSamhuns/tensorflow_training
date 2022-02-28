@@ -22,10 +22,12 @@ os.makedirs("logs", exist_ok=True)
 logging.basicConfig(filename=f'logs/extraction_statistics_{year}{month}{day}_{hour}:{minute}:{sec}.log',
                     level=logging.INFO)
 
-CLASS_NAME_TO_LABEL_DICT = {"class1": 0, "class2": 1}
+# IMPORTANT, make sure this dict matches the class dir name and label
+CLASS_NAME_TO_LABEL_DICT = {'class1': 0,
+                            'class2': 1}
 
 
-def extract_img_np_arr(video_path, MAX_N_FRAME, reshape_size):
+def extract_img_np_arr_first_nframe(video_path, max_n_frame, reshape_size):
 
     cap = av.open(video_path)
     cap.streams.video[0].thread_type = 'AUTO'
@@ -39,33 +41,66 @@ def extract_img_np_arr(video_path, MAX_N_FRAME, reshape_size):
         if i % fps == 0 or i == 1:
             img = np.array(frame.to_image())
             save_frames_num += 1
-            if save_frames_num > MAX_N_FRAME:
+            if save_frames_num > max_n_frame:
                 break
-            img = cv2.resize(img, reshape_size).astype(np.float32)
+            if reshape_size:
+                img = cv2.resize(img, reshape_size).astype(np.float32)
             img_list.append(img)
     cap.close()
     del cap
     return np.array(img_list)
 
 
-def extract_and_save_img_np_arr(video_path, npy_path, MAX_N_FRAME, reshape_size):
+def extract_img_np_arr_uniform_nframe(video_path, max_n_frame, reshape_size):
+
+    cap = av.open(video_path)
+    cap.streams.video[0].thread_type = 'AUTO'
+    fps = int(round(cap.streams.video[0].average_rate))
+    video_nframes = np.floor(cap.streams.video[0].frames)
+    # uniform sample one frame per sec of video
+    uniform_frame_set = set(np.arange(0, video_nframes, fps))
+    img_list = []
+    i = 0
+    save_frames_num = 0
+    for frame in cap.decode(video=0):
+        if i in uniform_frame_set:
+            img = np.array(frame.to_image())
+            save_frames_num += 1
+            if save_frames_num > max_n_frame:
+                break
+            if reshape_size:
+                img = cv2.resize(img, reshape_size).astype(np.float32)
+            img_list.append(img)
+        i += 1
+    cap.close()
+    del cap
+    return np.array(img_list)
+
+
+def extract_and_save_img_np_arr(video_path, npy_path, max_n_frame, reshape_size):
     try:
-        np_arr = extract_img_np_arr(video_path, MAX_N_FRAME, reshape_size)
-        if len(np_arr) < MAX_N_FRAME:
-            diff = MAX_N_FRAME - len(np_arr)
-            h, w = reshape_size
+        # np_arr = extract_img_np_arr_first_nframe(video_path, max_n_frame, reshape_size)
+        np_arr = extract_img_np_arr_uniform_nframe(
+            video_path, max_n_frame, reshape_size)
+        if len(np_arr) < max_n_frame:
+            diff = max_n_frame - len(np_arr)
+            if reshape_size:
+                h, w = reshape_size
+            else:
+                h, w = np_arr.shape[1:3]
             np_arr = np.concatenate(
                 [np_arr, np.zeros([diff, h, w, 3])], axis=0)
         cname = video_path.split('/')[-2]
         label = CLASS_NAME_TO_LABEL_DICT[cname]
-        np.savez_compressed(file=npy_path, image=np_arr, label=label)
+        np.savez_compressed(file=npy_path, arr=np_arr, label=label)
     except Exception as e:
         print(e)
+        traceback.print_exc()
         return 0
     return 1
 
 
-def extract_frames_from_video_single_process(source_data_path, target_data_path, reshape_size, MAX_N_FRAME):
+def extract_frames_from_video_single_process(source_data_path, target_data_path, reshape_size, max_n_frame):
     print("Single Process Extraction")
     init_tm = time.time()
     dir_path_list = glob.glob(os.path.join(source_data_path, "*"))
@@ -94,7 +129,7 @@ def extract_frames_from_video_single_process(source_data_path, target_data_path,
                     continue
 
                 class_media_ext += extract_and_save_img_np_arr(
-                    media_path, npy_frames_save_path, MAX_N_FRAME, reshape_size)
+                    media_path, npy_frames_save_path, max_n_frame, reshape_size)
             except Exception as e:
                 print(f"{e}. Extraction failed for media {media_path}")
                 traceback.print_exc()
@@ -107,7 +142,7 @@ def extract_frames_from_video_single_process(source_data_path, target_data_path,
         f"Total time taken: {time.time() - init_tm:.2f}s")
 
 
-def extract_frames_from_video_multi_process(source_data_path, target_data_path, reshape_size, MAX_N_FRAME):
+def extract_frames_from_video_multi_process(source_data_path, target_data_path, reshape_size, max_n_frame):
     print("Multi Process Extraction")
 
     def _multi_process_np_arr_extraction(source_dir, target_dir, reshape_size, MAX_N_FRAME):
@@ -142,7 +177,7 @@ def extract_frames_from_video_multi_process(source_data_path, target_data_path, 
 
     init_tm = time.time()
     total_media_ext = _multi_process_np_arr_extraction(
-        source_data_path, target_data_path, reshape_size, MAX_N_FRAME)
+        source_data_path, target_data_path, reshape_size, max_n_frame)
 
     logging.info(
         f"{total_media_ext} frame arrays extracted from {source_data_path} and saved in {target_data_path}")
@@ -170,11 +205,11 @@ def main():
     parser.add_argument('-td', '--target_data_path',
                         type=str, default="extracted_data",
                         help="Target dataset path where video frames will be extracted to. (default: %(default)s)")
-    parser.add_argument('-mf', '--MAX_N_FRAME',
+    parser.add_argument('-mf', '--max_n_frame',
                         type=int, default=15,
                         help='Max number of frames to extract from video. (default: %(default)s)')
     parser.add_argument("-rs", "--reshape_size",
-                        nargs=2, default=(224, 224),
+                        nargs=2, default=None,
                         help='Video frames are resized to this (w,h) -rs 224 224. (default: %(default)s)')
     parser.add_argument("-mt", "--multiprocessing",
                         action="store_true",
@@ -182,10 +217,10 @@ def main():
     args = parser.parse_args()
     if args.multiprocessing:
         extract_frames_from_video_multi_process(
-            args.source_data_path, args.target_data_path, args.reshape_size, args.MAX_N_FRAME)
+            args.source_data_path, args.target_data_path, args.reshape_size, args.max_n_frame)
     else:
         extract_frames_from_video_single_process(
-            args.source_data_path, args.target_data_path, args.reshape_size, args.MAX_N_FRAME)
+            args.source_data_path, args.target_data_path, args.reshape_size, args.max_n_frame)
 
 
 if __name__ == "__main__":
