@@ -1,20 +1,21 @@
-from __future__ import print_function
 import os
 import random
 import argparse
-from dataset_utils import _get_img_paths_and_save_cls_map_file, _convert_dataset_to_tfr
 
-random_seed = 42  # for reproducability
+random_seed = 42
+random.seed(random_seed)
 CUDA_DEV = "-1"
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = CUDA_DEV
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
+from dataset_utils import _get_img_to_cid_list, _save_cls_map_file, _convert_dataset_to_tfr
+
 
 def convert_to_tfrecord(img_dir_path, tfrecord_dir_path, cls_map_path, num_shards):
-    img_path_cid_list = _get_img_paths_and_save_cls_map_file(img_dir_path, cls_map_path)
+    img_path_cid_list = _get_img_to_cid_list(img_dir_path)
+    _save_cls_map_file(img_dir_path, cls_map_path)
 
-    random.seed(random_seed)
     for _ in range(5):
         random.shuffle(img_path_cid_list)
     _convert_dataset_to_tfr(img_path_cid_list=img_path_cid_list,

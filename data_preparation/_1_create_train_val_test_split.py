@@ -52,17 +52,20 @@ def write_fpaths_to_file(fpath_list, txt_path, mode='w'):
 
 
 def split_train_test(source_img_dir, splitted_img_dir, val_split, test_split) -> None:
+    if (val_split + test_split) > 1:
+        raise ValueError(
+            f"val {val_split} + test {test_split} = {val_split + test_split} split cannot exceed 1.0")
     train_dir = osp.join(splitted_img_dir, "train")
     os.makedirs(train_dir, exist_ok=True)
 
     train_info_txt = osp.join(splitted_img_dir, "train_paths.txt")
     write_fpaths_to_file([], train_info_txt)  # create empty train_paths.txt
-    if val_split is not None:
+    if val_split > 0:
         val_dir = osp.join(splitted_img_dir, "val")
         val_info_txt = osp.join(splitted_img_dir, "val_paths.txt")
         write_fpaths_to_file([], val_info_txt)  # create empty val_paths.txt
         os.makedirs(val_dir, exist_ok=True)
-    if test_split is not None:
+    if test_split > 0:
         test_dir = osp.join(splitted_img_dir, "test")
         test_info_txt = osp.join(splitted_img_dir, "test_paths.txt")
         os.makedirs(test_dir, exist_ok=True)
@@ -79,13 +82,13 @@ def split_train_test(source_img_dir, splitted_img_dir, val_split, test_split) ->
         random.shuffle(f_list)
 
         val_size, test_size = 0, 0
-        if val_split is not None:
+        if val_split > 0:
             val_size = int(len(f_list) * val_split)
             val_paths = [f_list[i] for i in range(val_size)]
             class_val_dir = osp.join(val_dir, class_name)
             create_dir_and_copy_files(class_val_dir, val_paths)
             write_fpaths_to_file(val_paths, val_info_txt, mode='a')
-        if test_split is not None:
+        if test_split > 0:
             test_size = int(len(f_list) * test_split)
             test_paths = [f_list[i + val_size] for i in range(test_size)]
             class_test_dir = osp.join(test_dir, class_name)
@@ -100,9 +103,7 @@ def split_train_test(source_img_dir, splitted_img_dir, val_split, test_split) ->
 
 
 def main():
-    """By default dataset is spit in train-val-test in ratio 80:10:10.
-    If one of the val or test split is not provided,
-    data is split into two parts
+    """By default dataset is spit in train-val-test in ratio 85:5:10.
     """
     parser = argparse.ArgumentParser("""
                 Split dataset into train, val, and test.
@@ -110,25 +111,17 @@ def main():
                 default val and test splits are set to 5% and 10% resp.""")
     parser.add_argument('-sd', '--source_data_path',
                         type=str, required=True,
-                        help="""source dataset path with
-                        class imgs inside folders""")
+                        help="source dataset path with class imgs inside folders""")
     parser.add_argument('-td', '--target_data_path',
                         type=str, required=True,
-                        help="""Target dataset path where
-                        imgs will be sep into train, val or test""")
+                        help="Target dataset path where imgs will be sep into train, val or test")
     parser.add_argument('-vs', '--val_split',
-                        type=float, required=False,
-                        help='Val data split percentage. i.e. 0.05')
+                        type=float, default=0.05,
+                        help='Val data split proportion. Pass 0 to avoid splitting. (default: %(default)s)')
     parser.add_argument('-ts', '--test_split',
-                        type=float, required=False,
-                        help='Test data split percentage. i.e. 0.1')
+                        type=float, default=0.10,
+                        help='Test data split proportion.  Pass 0 to avoid splitting. (default: %(default)s)')
     args = parser.parse_args()
-    # set default vals here instead of above to ensure None
-    # vals will be passed if only one split is provided
-    if args.val_split is None and args.test_split is None:
-        args.val_split = 0.05
-        args.test_split = 0.10
-
     split_train_test(args.source_data_path,
                      args.target_data_path,
                      args.val_split,
