@@ -33,6 +33,7 @@ class FrameExtractor:
         self.pad_zeros = pad_zeros
         self.cname_to_label_dict = self.get_cname_to_label_dict(
             self.source_path)
+        os.makedirs(self.target_path, exist_ok=True)
         self.save_cname_to_label_dict(self.cname_to_label_dict, self.cmap_path)
 
     def get_cname_to_label_dict(self, source_path):
@@ -46,9 +47,10 @@ class FrameExtractor:
         class_id = 0
         # for each class dir
         for dir_path in class_data_list:
-            class_name = osp.basename(dir_path)
-            cname_to_label_dict[class_name] = class_id
-            class_id += 1
+            if osp.isdir(dir_path):
+                class_name = osp.basename(dir_path)
+                cname_to_label_dict[class_name] = class_id
+                class_id += 1
         return cname_to_label_dict
 
     def save_cname_to_label_dict(self, cdict, cmap_path):

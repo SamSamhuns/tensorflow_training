@@ -41,10 +41,11 @@ def _get_img_to_cid_list(dataset_dir) -> List[Union[str, int]]:
     class_id = 0
     # for each class dir
     for dir_path in class_data_list:
-        # for each img
-        for img_path in glob.glob(osp.join(dir_path, "*")):
-            img_path_cid_list.append([img_path, class_id])
-        class_id += 1
+        if osp.isdir(dir_path):
+            # for each img
+            for img_path in glob.glob(osp.join(dir_path, "*")):
+                img_path_cid_list.append([img_path, class_id])
+            class_id += 1
     return img_path_cid_list
 
 
@@ -59,9 +60,10 @@ def _save_cls_map_file(dataset_dir, cls_map_path) -> None:
     with open(os.path.join(cls_map_path), 'w') as f:
         # for each class dir
         for dir_path in class_data_list:
-            class_name = osp.basename(dir_path)
-            f.write(str(class_id) + "\t" + class_name + "\n")
-            class_id += 1
+            if osp.isdir(dir_path):
+                class_name = osp.basename(dir_path)
+                f.write(str(class_id) + "\t" + class_name + "\n")
+                class_id += 1
 
 
 def _get_tfrecord_path(shard_id, tfrecord_dir_path) -> str:
