@@ -1,5 +1,6 @@
 easydict==1.9
 imageio==2.13.1
+matplotlib==3.5.1
 pytest==7.0.0
 python-dotenv==0.19.2
 scikit-learn==1.0.2
