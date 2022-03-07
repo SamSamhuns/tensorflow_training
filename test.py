@@ -29,20 +29,20 @@ def get_class_name_list(mapping_file):
 
 
 def test(config):
-    logger = config.get_logger('test')
+    config.setup_logger('test')
 
     model = tf.keras.models.load_model(config.resume)
     h, w, _ = config.model.args.input_shape
+    classes_list = get_class_name_list(config["data"]["class_map_txt_path"])
 
     test_ds = tf.keras.preprocessing.image_dataset_from_directory(
         config["data"]["test_data_dir"],
         labels='inferred',
-        class_names=get_class_name_list(
-            config["tester"]["class_map_txt_path"]),
+        class_names=classes_list,
         image_size=(h, w),
         seed=None,
         shuffle=False,
-        batch_size=32)
+        batch_size=config["data"]["test_bsize"])
 
     # print(test_ds.class_names)
     n_cls = config["data"]["num_classes"]
@@ -68,19 +68,29 @@ def test(config):
     with redirect_stdout(f):
         model.summary()
     model_summary = f.getvalue()
-    logger.info(model_summary)
+    config.logger.info(model_summary)
+    config.logger.info(f"Classes_list: {classes_list}")
+    config.logger.info(f"Statistics for model: {config.resume}")
 
-    logger.info(f"Statistics for model: {config.resume}")
     met_val_dict = {}
-    met_func_dict = {_metric: config.init_ftn(["test_metrics", _metric], module_metric, num_classes=n_cls)
-                     if _metric in {"acc_per_class", "confusion_matrix"}
-                     else config.init_ftn(["test_metrics", _metric], module_metric)
-                     for _metric in config["test_metrics"]}
+    met_func_dict = {}
+    # load metric funcs with neccesary params
+    for _metric in config["test_metrics"]:
+        if _metric in {"acc_per_class", "confusion_matrix"}:
+            mfunc = config.init_ftn(["test_metrics", _metric], module_metric,
+                                    num_classes=n_cls)
+        elif _metric in {"plot_confusion_matrix"}:
+            mfunc = config.init_ftn(["test_metrics", _metric], module_metric,
+                                    target_names=classes_list, savepath=str(config.log_dir / "cm.jpg"))
+        else:
+            mfunc = config.init_ftn(["test_metrics", _metric], module_metric)
+        met_func_dict[_metric] = mfunc
+    # run metric funcs on agg label and pred
     for met, met_func in met_func_dict.items():
         met_val_dict[met] = met_func(agg_label, agg_pred)
 
     log = {met: met_val for met, met_val in met_val_dict.items()}
-    logger.info(f"test: {(log)}")
+    config.logger.info(f"test: {(log)}")
 
 
 def main():

@@ -72,7 +72,10 @@ Set number of GPUs to use and other tensorflow command line env vars in `.env`.
 $ python train.py -c CONFIG_JSON_PATH [-r RESUME_CHECKPOINT_PATH]
 ```
 
-Note: Using the `-r` option while training will override the `resume_checkpoint` param in config json if this param is not null.
+Note:
+
+-   Using the `-r` option while training will override the `resume_checkpoint` param in config json if this param is not null.
+-   To add tensorflow logs to train/test logs, set `"disable_existing_loggers"` parameter to `true` in `tf_train/logging/logger_config.json`.
 
 ### Training Tracking with TensorBoard
 
