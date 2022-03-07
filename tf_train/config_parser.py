@@ -3,9 +3,12 @@ from pathlib import Path
 from datetime import datetime
 from functools import partial
 
+import random
+import numpy as np
+import tensorflow as tf
 from dotenv import dotenv_values
 from easydict import EasyDict as edict
-from tf_train.logging import setup_logging
+from tf_train.logging import setup_logging_config
 from tf_train.model.models_info import model_info_dict
 from tf_train.utils.common_utils import read_json, write_json
 
@@ -20,11 +23,17 @@ class ConfigParser:
         :param resume: String, path to the checkpoint being loaded.
         :param run_id: Unique Identifier for train & test. Used to save ckpts & training log. Timestamp is used as default
         """
+        # set seed
+        seed = config["seed"]
+        random.seed(seed)
+        np.random.seed(seed)
+        tf.random.set_seed(seed)
+
         # set save_dir where trained model and log will be saved.
         save_dir = Path(config['trainer']['save_dir'])
         exper_name = config['name']
         if run_id is None:  # use timestamp as default run-id
-            run_id = datetime.now().strftime(r'%Y%m%d_%H%M%S')
+            run_id = datetime.now().strftime(r'%Y%m%d_%H_%M_%S')
         self._save_dir = save_dir / 'models' / exper_name / run_id
         self._log_dir = save_dir / 'logs' / exper_name / run_id
 
@@ -50,7 +59,7 @@ class ConfigParser:
         write_json(config, self.save_dir / 'config.json')
 
         # configure logging module
-        setup_logging(self.log_dir)
+        setup_logging_config(self.log_dir)
         self.log_levels = {
             0: logging.WARNING,
             1: logging.INFO,
@@ -144,13 +153,13 @@ class ConfigParser:
         """Access items like ordinary dict."""
         return self.config[name]
 
-    def get_logger(self, name, verbosity=1):
+    def setup_logger(self, name, verbosity=2):
         msg_verbosity = 'verbosity option {} is invalid. Valid options are {}.'.format(
             verbosity, self.log_levels.keys())
         assert verbosity in self.log_levels, msg_verbosity
-        logger = logging.getLogger(name)
-        logger.setLevel(self.log_levels[verbosity])
-        return logger
+        self.logger = logging.getLogger(name)
+        self.logger.setLevel(self.log_levels[verbosity])
+        print(f"Logger {name} initialized with level: {self.log_levels[verbosity]}")
 
     # set read-only attributes
     @property

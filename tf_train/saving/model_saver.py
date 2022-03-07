@@ -1,4 +1,3 @@
-import logging
 from functools import partial
 
 import tensorflow as tf
@@ -19,7 +18,7 @@ def get_flops(tf_model_path):
             return flops.total_float_ops
 
 
-def print_flops_n_train_tm(model, model_savepath, train_time):
+def print_flops_n_train_tm(config, model, model_savepath, train_time):
     day = train_time // (24 * 3600)
     train_time = train_time % (24 * 3600)
     hour = train_time // 3600
@@ -28,10 +27,11 @@ def print_flops_n_train_tm(model, model_savepath, train_time):
     train_time %= 60
     secs = train_time
 
-    logging.info(f"Printing stats for model at {model_savepath}")
-    logging.info(f"\tTotal Flops : {get_flops(model_savepath)}")
-    logging.info(f"\tTraining Time: {day}:{hour}:{mins}:{secs} (d:h:m:s)")
-    logging.info(f"\tTotal Parameters: {model.count_params()}")
+    config.logger.info(f"Printing stats for model at {model_savepath}")
+    config.logger.info(f"\tTotal Flops : {get_flops(model_savepath)}")
+    config.logger.info(
+        f"\tTraining Time: {day}:{hour}:{mins}:{secs} (d:h:m:s)")
+    config.logger.info(f"\tTotal Parameters: {model.count_params()}")
 
 
 def save_model(model, train_time, config):
@@ -56,7 +56,7 @@ def save_model(model, train_time, config):
         infer_path /= "qa_infer_model"
         tf.keras.models.save_model(model, retrain_path, include_optimizer=True)
         tf.keras.models.save_model(model, infer_path, include_optimizer=False)
-        print_flops_n_train_tm(model, infer_path, train_time)
+        print_flops_n_train_tm(config, model, infer_path, train_time)
     elif post_train_qtn:
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
@@ -77,7 +77,7 @@ def save_model(model, train_time, config):
         tf.keras.models.save_model(model, retrain_path, include_optimizer=True)
         model = tfmot.clustering.keras.strip_clustering(model)
         tf.keras.models.save_model(model, infer_path, include_optimizer=False)
-        print_flops_n_train_tm(model, infer_path, train_time)
+        print_flops_n_train_tm(config, model, infer_path, train_time)
 
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
         model1 = converter.convert()
@@ -101,7 +101,7 @@ def save_model(model, train_time, config):
         tf.keras.models.save_model(model, retrain_path, include_optimizer=True)
         model = tfmot.sparsity.keras.strip_pruning(model)
         tf.keras.models.save_model(model, infer_path, include_optimizer=False)
-        print_flops_n_train_tm(model, infer_path, train_time)
+        print_flops_n_train_tm(config, model, infer_path, train_time)
 
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
         model1 = converter.convert()
@@ -124,4 +124,4 @@ def save_model(model, train_time, config):
         retrain_path /= "retrain_model"
         tf.keras.models.save_model(model, retrain_path, include_optimizer=True)
         tf.keras.models.save_model(model, infer_path, include_optimizer=False)
-        print_flops_n_train_tm(model, infer_path, train_time)
+        print_flops_n_train_tm(config, model, infer_path, train_time)

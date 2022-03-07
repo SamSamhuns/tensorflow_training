@@ -24,7 +24,7 @@ from tf_train.model_optimization import optimize_model
 
 
 def train(config):
-    logger = config.get_logger('train')
+    config.setup_logger('train')
 
     tf.executing_eagerly()
     tf.keras.backend.clear_session()
@@ -33,13 +33,15 @@ def train(config):
 
     local_device_protos = device_lib.list_local_devices()
     ngpu_avai = len(tf.config.list_physical_devices('GPU'))
-    logger.debug(f"Available devices: {[x.name for x in local_device_protos]}")
-    logger.info(f"Num GPUs used: {ngpu_avai}")
+    config.logger.info(f"Available devices: {[x.name for x in local_device_protos]}")
+    config.logger.info(f"Num GPUs used: {ngpu_avai}")
 
     if ngpu_avai > 0:
+        config.logger.info("Training on GPU")
         mirrored_strategy = tf.distribute.MirroredStrategy(
             devices=[f"/gpu:{dev}" for dev in range(ngpu_avai)])
     else:
+        config.logger.info("Training on CPU")
         mirrored_strategy = tf.distribute.MirroredStrategy(devices=["/cpu:0"])
     # Convert and infer from pb file https://medium.com/@pipidog/how-to-convert-your-keras-models-to-tensorflow-e471400b886a
     with mirrored_strategy.scope():
@@ -62,7 +64,7 @@ def train(config):
             elif cb_obj_name == "ckpt_callback":
                 callback = config.init_obj(
                     ["callbacks", cb_obj_name], tf.keras.callbacks,
-                    filepath=config.save_dir / "{epoch:04d}")
+                    filepath=config.save_dir / config["trainer"]["ckpt_fmt"])
             elif cb_obj_name == "epoch_log_lambda_callback":
                 log_file = open(config.log_dir / "info.log",
                                 mode='a', buffering=1)
@@ -85,13 +87,13 @@ def train(config):
             resume_ckpt = config["resume_checkpoint"]
 
         if resume_ckpt is None:
-            logger.info("Cold Starting")
+            config.logger.info("Cold Starting")
             model = get_model(config)
             tf.config.optimizer.set_jit(True)
             model.compile(optimizer=optimizer, loss=loss,
                           loss_weights=loss_weights, metrics=metrics)
         else:
-            logger.info("Warm starting from " + resume_ckpt)
+            config.logger.info("Warm starting from " + resume_ckpt)
             with tfmot.quantization.keras.quantize_scope(), \
                     tfmot.clustering.keras.cluster_scope(), \
                     tfmot.sparsity.keras.prune_scope():
@@ -106,16 +108,17 @@ def train(config):
         with redirect_stdout(f):
             model.summary()
         model_summary = f.getvalue()
-        logger.info(model_summary)
+        config.logger.info(model_summary)
 
         start_time = datetime.today().timestamp()
-
-        model.fit(X=train_input_fn(config),
-                  initial_epoch=0, epochs=config["trainer"]["epochs"],
-                  callbacks=callbacks, verbose=config["trainer"]["verbosity"],
+        model.fit(x=train_input_fn(config),
+                  epochs=config["trainer"]["epochs"],
                   validation_data=val_input_fn(config),
                   validation_freq=config["trainer"]["val_freq"],
-                  workers=config["trainer"]["num_workers"], use_multiprocessing=True)
+                  callbacks=callbacks, verbose=config["trainer"]["verbosity"],
+                  initial_epoch=0,
+                  workers=config["trainer"]["num_workers"],
+                  use_multiprocessing=config["trainer"]["use_multiproc"])
         training_time = datetime.today().timestamp() - start_time
 
         save_model(model, training_time, config)
@@ -125,10 +128,10 @@ def train(config):
             loaded_model = tf.keras.models.load_model(
                 config.save_dir / "retrain_model")
             infer = loaded_model.signatures["serving_default"]
-            logger.info(infer.structured_input_signature)
-            logger.info(infer.structured_outputs)
+            config.logger.info(infer.structured_input_signature)
+            config.logger.info(infer.structured_outputs)
         except Exception as e:
-            logger.error(
+            config.logger.error(
                 f"{e}. Could not get model input-output name and shapes.")
 
 

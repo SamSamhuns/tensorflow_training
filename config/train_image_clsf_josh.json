@@ -1,31 +1,29 @@
 {
-  "name": "Image_Classification",
-  "seed": 42,
+  "name": "Image_Classification_facenet_dense2",
   "resume_checkpoint": null,
-  "arch": "MobileNetV3Large",
+  "arch": "Facenet",
   "trainable_feat_backbone": true,
   "trainer": {
-    "epochs": 5,
-    "verbosity": "auto",
+    "epochs": 30,
+    "num_workers": 100,
     "save_dir": "checkpoints",
     "val_freq": 1,
-    "num_workers": 8,
-    "use_multiproc": true,
-    "use_tensorboard": true,
-    "ckpt_fmt": "e{epoch:03d}_ta{accuracy:.2f}_tl{loss:.2f}_va{val_accuracy:.2f}_vl{val_loss:.2f}"
+    "verbosity": "auto",
+    "use_tensorboard": true
+  },
+  "tester": {
+    "class_map_txt_path": "data/male_female_child_dataset_classmap.txt"
   },
   "data": {
-    "train_data_dir": "data/sample_tfrecord_bird_dataset/train",
-    "val_data_dir": "data/sample_tfrecord_bird_dataset/val",
-    "test_data_dir": "data/sample_tfrecord_bird_dataset/test",
+    "train_data_dir": "/home/sam/tensorflow_training/data/tfrecord_train_male_female_child/",
+    "val_data_dir": "/home/sam/tensorflow_training/data/tfrecord_val_male_female_child/",
+    "test_data_dir": "/home/sam/tensorflow_training/data/face_data_test_male_female_child/",
     "train_bsize": 32,
     "val_bsize": 32,
-    "test_bsize": 32,
-    "class_map_txt_path": "data/bird_dataset_classmap.txt",
     "tfrecord_parallel_read": 20,
     "shuffle": true,
-    "num_classes": 265,
-    "total_training_samples": 10000
+    "num_classes": 3,
+    "total_training_samples": 436844
   },
   "optimizer": {
     "type": "SGD",
@@ -45,6 +43,66 @@
     }
   },
   "loss_weights": [1.0],
+  "train_metrics": {
+    "accuracy": {
+      "type": "CategoricalAccuracy",
+      "args": {
+        "name": "accuracy"
+      }
+    }
+  },
+  "test_metrics": {
+    "accuracy": {
+      "type": "accuracy",
+      "args": {}
+    },
+    "accuracy_top_2": {
+      "type": "top_k_acc",
+      "args": {
+        "k": 2
+      }
+    },
+    "accuracy_top_3": {
+      "type": "top_k_acc",
+      "args": {
+        "k": 3
+      }
+    },
+    "accuracy_top_4": {
+      "type": "top_k_acc",
+      "args": {
+        "k": 4
+      }
+    },
+    "accuracy_top_5": {
+      "type": "top_k_acc",
+      "args": {
+        "k": 5
+      }
+    },
+    "acc_per_class": {
+      "type": "acc_per_class",
+      "args": {}
+    },
+    "precision": {
+      "type": "precision",
+      "args": {
+        "average": "weighted"
+      }
+    },
+    "recall": {
+      "type": "recall",
+      "args": {
+        "average": "weighted"
+      }
+    },
+    "f1score": {
+      "type": "f1score",
+      "args": {
+        "average": "weighted"
+      }
+    }
+  },
   "callbacks": {
     "tensorboard_callback": {
       "type": "LRTensorBoard",
@@ -82,72 +140,8 @@
         "min_lr": 0
       }
     },
-    "early_stopping_callback": {
-      "type": "EarlyStopping",
-      "args": {
-        "monitor": "val_loss",
-        "patience": 4,
-        "mode": "auto",
-        "min_delta": 0,
-        "verbose": 0,
-        "baseline": null,
-        "restore_best_weights": false
-      }
-    },
     "epoch_log_lambda_callback": {
       "type": "LambdaCallback",
-      "args": {}
-    }
-  },
-  "train_metrics": {
-    "accuracy": {
-      "type": "CategoricalAccuracy",
-      "args": {
-        "name": "accuracy"
-      }
-    }
-  },
-  "test_metrics": {
-    "accuracy": {
-      "type": "accuracy",
-      "args": {}
-    },
-    "accuracy_top_2": {
-      "type": "top_k_acc",
-      "args": {
-        "k": 2
-      }
-    },
-    "accuracy_top_3": {
-      "type": "top_k_acc",
-      "args": {
-        "k": 3
-      }
-    },
-    "acc_per_class": {
-      "type": "acc_per_class",
-      "args": {}
-    },
-    "precision": {
-      "type": "precision",
-      "args": {
-        "average": "weighted"
-      }
-    },
-    "recall": {
-      "type": "recall",
-      "args": {
-        "average": "weighted"
-      }
-    },
-    "f1score": {
-      "type": "f1score",
-      "args": {
-        "average": "weighted"
-      }
-    },
-    "plot_confusion_matrix": {
-      "type": "plot_confusion_matrix",
       "args": {}
     }
   },

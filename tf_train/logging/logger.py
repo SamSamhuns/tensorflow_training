@@ -4,7 +4,7 @@ from pathlib import Path
 from tf_train.utils import read_json
 
 
-def setup_logging(save_dir, log_config='tf_train/logging/logger_config.json', default_level=logging.INFO):
+def setup_logging_config(save_dir, log_config='tf_train/logging/logger_config.json', default_level=logging.INFO):
     """
     Setup logging configuration
     """
