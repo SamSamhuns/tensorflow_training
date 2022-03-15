@@ -82,7 +82,7 @@ celerybeat-schedule
 *.sage.py
 
 # Environments
-.env
+# .env  # tf env vars must be commited and tracked
 .venv
 env/
 venv/
