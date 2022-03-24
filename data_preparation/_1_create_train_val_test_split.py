@@ -13,17 +13,27 @@ from typing import List
 
 
 # ################### Source Data Organization ######################
-#   source_data
-#          |_ dataset
-#                   |_ class_1
-#                             |_ img1
-#                             |_ img2
-#                             |_ ....
-#                   |_ class_2
-#                             |_ img1
-#                             |_ img2
-#                             |_ ....
-#                   ...
+# dataset
+#       |_ class_1
+#                 |_ img1
+#                 |_ img2
+#                 |_ ....
+#       |_ class_2
+#                 |_ img1
+#                 |_ img2
+#                 |_ ....
+#       ...
+# However, a recursive search is done for each class sub-dir so that
+# the following structure is also valid, but the script removes any
+# underlying subset partition for classes
+# dataset
+#       |_ class_1
+#                 |_ 00
+#                     |_ img1
+#                     |_ img2
+#                 |_ 01
+#                     |_ img1
+#                     |_ img2
 # ###################################################################
 
 # #################### Data Configurations here #####################
@@ -77,7 +87,7 @@ def split_train_test(source_img_dir, splitted_img_dir, val_split, test_split) ->
     for dir_path in tqdm(dir_list):
         class_name = dir_path.split("/")[-1]  # get class name
 
-        f_list = [file for file in glob.glob(osp.join(dir_path, "*"))
+        f_list = [file for file in glob.glob(osp.join(dir_path, "**/*"), recursive=True)
                   if osp.splitext(file)[1][1:] in VALID_FILE_EXTS]
         random.shuffle(f_list)
 
