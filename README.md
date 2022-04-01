@@ -14,7 +14,7 @@ $ source venv/bin/activate
 $ pip install -r requirements.txt
 ```
 
-Note: When using a python virtualenv, the `LD_LIBRARY_PATH` variables should be set in the shell source files.
+Note: When using a python virtualenv, the `LD_LIBRARY_PATH` variable should be set to `/usr/local/cuda/lib64` in the shell source files. The `XLA_FLAGS="--xla_gpu_cuda_data_dir=/usr/local/cuda` must also be set to the cuda directory.
 
 Or, install with a conda environment
 
