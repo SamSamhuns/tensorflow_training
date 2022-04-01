@@ -6,13 +6,25 @@ Train TensorFlow models for image/video/features classification or other tasks. 
 
 Framework tested with python 3.7.x
 
-Install requirements inside a virtualenv or a conda env.
+Install requirements inside a virtualenv.
 
 ```shell
 $ python -m venv venv
 $ source venv/bin/activate
 $ pip install -r requirements.txt
 ```
+
+Note: When using a python virtualenv, the `LD_LIBRARY_PATH` variables should be set in the shell source files.
+
+Or, install with a conda environment
+
+```shell
+$ conda create --name tf_gpu tensorflow-gpu python=3.8 -y
+$ conda activate tf_gpu
+$ while read requirement; do conda install --yes $requirement; done < requirements.txt
+```
+
+Note: Conda environment sets the cuda, cudnn and cudatoolkit automatically but the NVIDIA drivers must be installed.
 
 ## Data Preparation
 
@@ -30,6 +42,8 @@ i.e.
                      |_ img2
                      |_ ....
            ...
+
+Note: ImageNet style ordering of data is also supported i.e. images ordered under subdirectories inside the class directories.
 
 ### Data Duplication
 
@@ -99,3 +113,7 @@ Unit and integration testing with pytest
 ```shell
 $ python -m pytest tf_train  # from the top project directory
 ```
+
+## Docker
+
+Set up docker to run with NVIDIA first.
