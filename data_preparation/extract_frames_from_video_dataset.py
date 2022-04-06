@@ -231,26 +231,26 @@ def main():
                 ...
     """
     parser = argparse.ArgumentParser("Extract frames from a video dataset.")
-    parser.add_argument('-sd', '--source_data_path',
-                        type=str, required=True,
+    parser.add_argument('--sd', '--source_data_path',
+                        type=str, dest="source_data_path", required=True,
                         help="Source dataset path with class imgs inside folders")
-    parser.add_argument('-td', '--target_data_path',
-                        type=str, default="extracted_data",
+    parser.add_argument('--td', '--target_data_path',
+                        type=str, dest="target_data_path", default="extracted_data",
                         help="Target dataset path where video frames will be extracted to. (default: %(default)s)")
-    parser.add_argument('-mf', '--max_n_frame',
-                        type=int, default=15,
+    parser.add_argument('--mf', '--max_n_frame',
+                        type=int, dest="max_n_frame", default=15,
                         help='Max number of frames to extract from video. (default: %(default)s)')
-    parser.add_argument("-rs", "--reshape_size",
-                        nargs=2, default=None,
+    parser.add_argument('--rs', '--reshape_size',
+                        nargs=2, dest="reshape_size", default=None,
                         help='Video frames are resized to this (w,h) -rs 224 224. (default: %(default)s)')
-    parser.add_argument("-mt", "--multiprocessing",
-                        action="store_true",
+    parser.add_argument('--mt', '--multiprocessing',
+                        action="store_true", dest="multiprocessing",
                         help='Extract videos with multiprocessing. WARNING: Can slow down system (default: %(default)s)')
-    parser.add_argument("-pz", "--pad_zeros",
-                        action="store_true",
+    parser.add_argument('--pz', '--pad_zeros',
+                        action="store_true", dest="pad_zeros",
                         help='Pad missing frames with np.zero if video has less frames than max_n_frame (default: %(default)s)')
-    parser.add_argument('-cm', '--class_map_txt_path',
-                        type=str, default="{TARGET_DATA_PATH}/dataset_classmap.txt",
+    parser.add_argument('--cm', '--class_map_txt_path',
+                        type=str, dest="class_map_txt_path", default="{TARGET_DATA_PATH}/dataset_classmap.txt",
                         help='Path to txt file where class label & name will be saved to. (default: %(default)s)')
     args = parser.parse_args()
     if args.reshape_size:  # ensure reshape_size is of type int

@@ -28,7 +28,8 @@ def validate_imgs(raw_data_path, corrupt_flist_txt, remove):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-rd', '--raw_data_path',
+    parser.add_argument('--rd', '--raw_data_path',
+                        dest="raw_data_path",
                         type=str, required=True,
                         help='Raw dataset path with class imgs inside folders')
     parser.add_argument('-r', '--remove',
