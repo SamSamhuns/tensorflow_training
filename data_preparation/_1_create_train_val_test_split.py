@@ -119,23 +119,21 @@ def main():
                 Split dataset into train, val, and test.
                 If val and test split percentages are not provided,
                 default val and test splits are set to 5% and 10% resp.""")
-    parser.add_argument('-sd', '--source_data_path',
-                        type=str, required=True,
+    parser.add_argument('--sd', '--source_data_path',
+                        type=str, dest="source_data_path", required=True,
                         help="source dataset path with class imgs inside folders""")
-    parser.add_argument('-td', '--target_data_path',
-                        type=str, required=True,
+    parser.add_argument('--td', '--target_data_path',
+                        type=str, dest="target_data_path", required=True,
                         help="Target dataset path where imgs will be sep into train, val or test")
-    parser.add_argument('-vs', '--val_split',
-                        type=float, default=0.05,
+    parser.add_argument('--vs', '--val_split',
+                        type=float, dest="val_split", default=0.05,
                         help='Val data split proportion. Pass 0 to avoid splitting. (default: %(default)s)')
-    parser.add_argument('-ts', '--test_split',
-                        type=float, default=0.10,
+    parser.add_argument('--ts', '--test_split',
+                        type=float, dest="test_split", default=0.10,
                         help='Test data split proportion.  Pass 0 to avoid splitting. (default: %(default)s)')
     args = parser.parse_args()
-    split_train_test(args.source_data_path,
-                     args.target_data_path,
-                     args.val_split,
-                     args.test_split)
+    split_train_test(
+        args.source_data_path, args.target_data_path, args.val_split, args.test_split)
 
 
 if __name__ == "__main__":

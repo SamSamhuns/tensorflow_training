@@ -72,21 +72,20 @@ def duplicate_data_dir(source_img_dir, duplicated_img_dir, target_number):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-sd', '--source_data_path',
-                        type=str, required=True,
+    parser.add_argument('--sd', '--source_data_path',
+                        type=str, dest="source_data_path", required=True,
                         help="Path with class imgs inside subdirs")
-    parser.add_argument('-td', '--target_data_path',
-                        type=str, required=True,
+    parser.add_argument('--td', '--target_data_path',
+                        type=str, dest="target_data_path", required=True,
                         help="Path where imgs will be saved in subdirs repr classes with number matching target_number")
     parser.add_argument('-n', '--target_number',
-                        type=int, default=1000,
+                        type=int, dest="target_number", default=1000,
                         help="""Target size to reach for each class after duplication.
                         If class has more imgs than target_number, only target_number imgs are copied.
                         (default : %(default)s)""")
     args = parser.parse_args()
-    duplicate_data_dir(args.source_data_path,
-                       args.target_data_path,
-                       args.target_number)
+    duplicate_data_dir(
+        args.source_data_path, args.target_data_path, args.target_number)
 
 
 if __name__ == "__main__":

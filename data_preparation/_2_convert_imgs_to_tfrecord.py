@@ -30,27 +30,24 @@ def main():
         eg. python _2_convert_dataset_to_npz -sd data/split_bird_dataset/train
                                              -td data/tfrecord_bird_dataset/train
                                              -ns 100""")
-    parser.add_argument('-sd', '--source_dir_path',
-                        type=str, required=True,
+    parser.add_argument('--sd', '--source_dir_path',
+                        type=str, dest='source_dir_path', required=True,
                         help="Source img dir path containing img files organized into subdirs with class names")
-    parser.add_argument('-td', '--tfrecord_dir_path',
-                        type=str, required=True,
+    parser.add_argument('--td', '--tfrecord_dir_path',
+                        type=str, dest='tfrecord_dir_path', required=True,
                         help="Dir path where tfrecord files will be stored for efficient reading")
-    parser.add_argument('-cp', '--class_map_txt_path',
-                        type=str, default="data/dataset_classmap.txt",
+    parser.add_argument('--cp', '--cmap_txt_path',
+                        type=str, dest='cmap_txt_path', default="data/dataset_classmap.txt",
                         help="""Path to txt file with info on class label and corresponding name. (default %(default)s)""")
-    parser.add_argument('-ns', '--num_shards',
-                        type=int, default=100,
+    parser.add_argument('--ns', '--num_shards',
+                        type=int, dest='num_shards', default=100,
                         help="Num of tfrecord shards. Ideally there should be approx 200 imgs per shard. (default %(default)s)")
     args = parser.parse_args()
-    img_path = args.source_dir_path
-    tfr_path = args.tfrecord_dir_path
-    cls_map_path = args.class_map_txt_path
-    num_shards = args.num_shards
-    os.makedirs(tfr_path, exist_ok=True)
+    os.makedirs(args.tfrecord_dir_path, exist_ok=True)
+    print(f"Class name to id mapping txt file written to {args.cmap_txt_path}")
 
-    print(f"Class name to class id mapping txt file written to {cls_map_path}")
-    convert_to_tfrecord(img_path, tfr_path, cls_map_path, num_shards)
+    convert_to_tfrecord(args.source_dir_path, args.tfrecord_dir_path,
+                        args.cmap_txt_path, args.num_shards)
 
 
 if __name__ == "__main__":
