@@ -95,13 +95,13 @@ def test(config):
 
 def main():
     parser = argparse.ArgumentParser(description='Tensorflow Testing')
-    parser.add_argument('-cfg', '--config', type=str, dest="config", default="config/train_image_clsf.json",
+    parser.add_argument('--cfg', '--config', type=str, dest="config", default="config/train_image_clsf.json",
                         help="config file path (default: %(default)s)")
     parser.add_argument('-r', '--resume', type=str, dest="resume", required=True,
                         help="path to checkpoint to use for testing")
     parser.add_argument('--id', '--run_id', type=str, dest="run_id", default="test_" + datetime.now().strftime(r'%Y%m%d_%H%M%S'),
                         help='unique identifier for test process. Annotates test logs. (default: %(default)s)')
-    config = ConfigParser.from_args(parser)
+    config = ConfigParser.from_args(parser, options=[])
     test(config)
 
 
