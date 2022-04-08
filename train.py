@@ -4,6 +4,7 @@ load_dotenv(".env")
 
 import io
 import argparse
+import collections
 from datetime import datetime
 from functools import partial
 from contextlib import redirect_stdout
@@ -17,6 +18,7 @@ import tf_train.logging as module_log
 import tf_train.metric as module_metric
 import tf_train.optimizer as module_optim
 from tf_train.model import get_model
+from tf_train.utils import write_json
 from tf_train.saving import save_model
 from tf_train.config_parser import ConfigParser
 from tf_train.preprocessing import train_input_fn, val_input_fn
@@ -26,6 +28,10 @@ from tf_train.model_optimization import optimize_model
 def train(config):
     config.setup_logger('train')
 
+    # mixed precision training https://www.tensorflow.org/guide/mixed_precision, default=float32
+    tf.keras.mixed_precision.set_global_policy(config["mixed_precision_global_policy"])
+    print("mixed_precision global_policy set to:", tf.keras.mixed_precision.global_policy())
+
     tf.executing_eagerly()
     tf.keras.backend.clear_session()
     tf.config.optimizer.set_jit(False)
@@ -33,7 +39,8 @@ def train(config):
 
     local_device_protos = device_lib.list_local_devices()
     ngpu_avai = len(tf.config.list_physical_devices('GPU'))
-    config.logger.info(f"Available devices: {[x.name for x in local_device_protos]}")
+    config.logger.info(
+        f"Available devices: {[x.name for x in local_device_protos]}")
     config.logger.info(f"Num GPUs used: {ngpu_avai}")
 
     if ngpu_avai > 0:
@@ -74,6 +81,13 @@ def train(config):
                         f"epoch: {epoch}, loss: {logs['loss']}, accuracy: {logs['accuracy']}, "
                         f"val_loss: {logs['val_loss']}, val_accuracy: {logs['val_accuracy']}\n"),
                     on_train_end=lambda logs: log_file.close())
+            elif cb_obj_name == "update_initial_epoch_callback":
+                def _update_initial_epoch(epoch):
+                    config["trainer"]["initial_epoch"] = epoch
+                    write_json(config._config, config.save_dir / 'config.json')
+                callback = config.init_obj(
+                    ["callbacks", cb_obj_name], tf.keras.callbacks,
+                    on_epoch_end=lambda epoch, logs: _update_initial_epoch(epoch))
             else:
                 callback = config.init_obj(
                     ["callbacks", cb_obj_name], tf.keras.callbacks)
@@ -93,7 +107,7 @@ def train(config):
             model.compile(optimizer=optimizer, loss=loss,
                           loss_weights=loss_weights, metrics=metrics)
         else:
-            config.logger.info("Warm starting from " + resume_ckpt)
+            config.logger.info(f"Warm starting from {resume_ckpt}")
             with tfmot.quantization.keras.quantize_scope(), \
                     tfmot.clustering.keras.cluster_scope(), \
                     tfmot.sparsity.keras.prune_scope():
@@ -116,7 +130,7 @@ def train(config):
                   validation_data=val_input_fn(config),
                   validation_freq=config["trainer"]["val_freq"],
                   callbacks=callbacks, verbose=config["trainer"]["verbosity"],
-                  initial_epoch=0,
+                  initial_epoch=config["trainer"]["initial_epoch"],
                   workers=config["trainer"]["num_workers"],
                   use_multiprocessing=config["trainer"]["use_multiproc"])
         training_time = datetime.today().timestamp() - start_time
@@ -137,13 +151,27 @@ def train(config):
 
 def main():
     parser = argparse.ArgumentParser(description='Tensorflow Training')
-    parser.add_argument('-cfg', '--config', default="config/train_image_clsf.json", type=str,
+    # primary cli args
+    parser.add_argument('--cfg', '--config', type=str, dest="config", default="config/train_image_clsf.json",
                         help='config file path (default: %(default)s)')
-    parser.add_argument('-r', '--resume', default=None, type=str,
-                        help='path to resume ckpt. Overrides `resume_checkpoint` in config. (default: %(default)s)')
-    parser.add_argument('-id', '--run_id', default="train_" + datetime.now().strftime(r'%Y%m%d_%H%M%S'), type=str,
+    parser.add_argument('--id', '--run_id', type=str, dest="run_id", default="train_" + datetime.now().strftime(r'%Y%m%d_%H%M%S'),
                         help='unique identifier for train process. Annotates train ckpts & logs. (default: %(default)s)')
-    config = ConfigParser.from_args(parser)
+    parser.add_argument('-r', '--resume', type=str, dest="resume", default=None,
+                        help='path to resume ckpt. Overrides `resume_checkpoint` in config. (default: %(default)s)')
+
+    # custom cli options to modify configuration from default values given in json file.
+    # should be used to reset train params when resuming checkpoint, i.e. reducing LR
+    OverrideArgs = collections.namedtuple(
+        'OverrideArgs', 'flags dest help type target')
+    options = [
+        OverrideArgs(['--lr', '--learning_rate'],
+                     dest="learning_rate", help="lr param to override that in config. (default: %(default)s)",
+                     type=float, target='optimizer;args;learning_rate'),
+        OverrideArgs(['--bs', '--train_bsize'],
+                     dest="train_bsize", help="train bsize to override that in config. (default: %(default)s)",
+                     type=int, target='data;train_bsize')
+    ]
+    config = ConfigParser.from_args(parser, options)
     train(config)
 
 

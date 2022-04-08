@@ -1,9 +1,9 @@
 easydict==1.9
-imageio==2.13.1
+imageio==2.16.1
 matplotlib==3.5.1
-pytest==7.0.0
+pytest==7.1.1
 python-dotenv==0.19.2
 scikit-learn==1.0.2
-tensorflow==2.6.2
-tensorflow-model-optimization==0.7.0
+tensorflow==2.8.0
+tensorflow-model-optimization==0.7.2
 tqdm==4.62.3
