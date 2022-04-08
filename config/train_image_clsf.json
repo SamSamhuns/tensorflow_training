@@ -2,30 +2,39 @@
   "name": "Image_Classification",
   "seed": 42,
   "resume_checkpoint": null,
+  "reference_supported_arch": [
+    "Facenet, Densenet121", "InceptionResNetV2, InceptionV3, Xception",
+    "EfficientNetB0, EfficientNetB2, EfficientNetB4, EfficientNetB6",
+    "EfficientNetV2B0, EfficientNetV2B1, EfficientNetV2B2, EfficientNetV2B3",
+    "EfficientNetV2S, EfficientNetV2M, EfficientNetV2L",
+    "MobileNetV2, MobileNetV3Large, MobileNetV3Small"
+  ],
   "arch": "MobileNetV3Large",
+  "mixed_precision_global_policy": "mixed_float16",
   "trainable_feat_backbone": true,
   "trainer": {
-    "epochs": 5,
+    "epochs": 10,
     "verbosity": "auto",
     "save_dir": "checkpoints",
     "val_freq": 1,
+    "initial_epoch": 0,
     "num_workers": 8,
     "use_multiproc": true,
     "use_tensorboard": true,
     "ckpt_fmt": "e{epoch:03d}_ta{accuracy:.2f}_tl{loss:.2f}_va{val_accuracy:.2f}_vl{val_loss:.2f}"
   },
   "data": {
-    "train_data_dir": "data/sample_tfrecord_bird_dataset/train",
-    "val_data_dir": "data/sample_tfrecord_bird_dataset/val",
-    "test_data_dir": "data/sample_tfrecord_bird_dataset/test",
+    "train_data_dir": "data/person_no_person_data_tfr_split/train_mini/",
+    "val_data_dir": "data/person_no_person_data_tfr_split/val_mini/",
+    "test_data_dir": "data/person_no_person_data_tfr_split/test_mini/",
     "train_bsize": 32,
     "val_bsize": 32,
     "test_bsize": 32,
-    "class_map_txt_path": "data/bird_dataset_classmap.txt",
+    "class_map_txt_path": "data/ildt_split_tfr/dataset_classmap.txt",
     "tfrecord_parallel_read": 20,
     "shuffle": true,
-    "num_classes": 265,
-    "total_training_samples": 10000
+    "num_classes": 2,
+    "total_training_samples": 382977
   },
   "optimizer": {
     "type": "SGD",
@@ -95,6 +104,10 @@
       }
     },
     "epoch_log_lambda_callback": {
+      "type": "LambdaCallback",
+      "args": {}
+    },
+    "update_initial_epoch_callback": {
       "type": "LambdaCallback",
       "args": {}
     }
