@@ -14,7 +14,7 @@ $ source venv/bin/activate
 $ pip install -r requirements.txt
 ```
 
-Note: When using a python virtualenv, the `LD_LIBRARY_PATH` variable should be set to `/usr/local/cuda/lib64` in the shell source files. The `XLA_FLAGS="--xla_gpu_cuda_data_dir=/usr/local/cuda` must also be set to the cuda directory.
+Note: When using a python virtualenv, the `LD_LIBRARY_PATH` variable should be set to `/usr/local/cuda/lib64` in the shell source files. The `/home/ss3/cuda/bin` must be added to the `$PATH` variable as well and the `XLA_FLAGS="--xla_gpu_cuda_data_dir=/usr/local/cuda` must also be set to the cuda directory.
 
 Or, install with a conda environment
 
@@ -24,7 +24,7 @@ $ conda activate tf_gpu
 $ while read requirement; do conda install --yes $requirement; done < requirements.txt
 ```
 
-Note: Conda environment sets the cuda, cudnn and cudatoolkit automatically but the NVIDIA drivers must be installed.
+Note: Conda environments set the cuda, cudnn and cudatoolkit automatically downloading non-python dependencies.
 
 ## Data Preparation
 
