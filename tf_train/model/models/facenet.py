@@ -27,8 +27,10 @@ class FacenetPred(tf.keras.Model):
             blocks.append(dense)
             units //= 2
 
-        # last classification layer
-        blocks.append(tf.keras.layers.Dense(num_classes, activation='softmax'))
+        # last classification and activation layer
+        # sep to set last layer dtype to f32 when using mixed_precision
+        blocks.append(tf.keras.layers.Dense(num_classes, dtype='float32'))
+        blocks.append(tf.keras.layers.Activation('softmax', dtype='float32'))
         self.blocks = tf.keras.Sequential([*blocks])
 
     def call(self, x):
