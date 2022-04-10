@@ -9,6 +9,8 @@ import imageio
 import tensorflow as tf
 from tensorflow.python.client import session
 
+VALID_FILE_EXTS = {'jpg', 'jpeg', 'JPEG', 'png'}
+
 
 def int64_feature(values):
     if not isinstance(values, (tuple, list)):
@@ -42,8 +44,11 @@ def _get_img_to_cid_list(dataset_dir) -> List[Union[str, int]]:
     # for each class dir
     for dir_path in class_data_list:
         if osp.isdir(dir_path):
+            # img path gen with images having matching extensions
+            img_gen = (path for path in glob.glob(osp.join(dir_path, "**/*"), recursive=True)
+                       if osp.splitext(path)[1][1:] in VALID_FILE_EXTS)
             # for each img
-            for img_path in glob.glob(osp.join(dir_path, "*")):
+            for img_path in img_gen:
                 img_path_cid_list.append([img_path, class_id])
             class_id += 1
     return img_path_cid_list
