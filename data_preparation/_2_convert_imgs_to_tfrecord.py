@@ -4,12 +4,36 @@ import argparse
 
 random_seed = 42
 random.seed(random_seed)
-CUDA_DEV = "-1"
+os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = CUDA_DEV
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
 from dataset_utils import _get_img_to_cid_list, _save_cls_map_file, _convert_dataset_to_tfr
+
+# ################### Source Data Organization ######################
+# dataset
+#       |_ class_1
+#                 |_ img1
+#                 |_ img2
+#                 |_ ....
+#       |_ class_2
+#                 |_ img1
+#                 |_ img2
+#                 |_ ....
+#       ...
+# However, a recursive search is done for each class sub-dir so that
+# the following structure is also valid, but the script removes any
+# underlying subset partition for classes
+# dataset
+#       |_ class_1
+#                 |_ 00
+#                     |_ img1
+#                     |_ img2
+#                 |_ 01
+#                     |_ img1
+#                     |_ img2
+# ###################################################################
 
 
 def convert_to_tfrecord(img_dir_path, tfrecord_dir_path, cls_map_path, num_shards):
