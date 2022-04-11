@@ -80,6 +80,8 @@ Configure all values in the `JSON` files inside the `config` dir. A sample confi
 
 Set number of GPUs to use and other tensorflow command line env vars in `.env`.
 
+Out of Memory errors during training could be caused by large batch sizes, model size or dataset.cache() call in train preprocessing. When using mixed_float16 precision, the final dense and activation layers must be set to float32.
+
 ## Model Training
 
 ```shell
