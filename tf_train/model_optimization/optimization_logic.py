@@ -87,7 +87,7 @@ def optimize_model(model, loss, optimizer, loss_weights, metrics, callbacks, con
                       loss_weights=loss_weights, metrics=metrics)
 
     # ########################## pruning configurations ########################
-    total = config["data"]["total_training_samples"]
+    total = config["data"]["num_train_samples"]
     bsize = config["data"]["train_bsize"]
     end_step = np.ceil(total / bsize).astype(np.int32) * \
         config["trainer"]["epochs"]
