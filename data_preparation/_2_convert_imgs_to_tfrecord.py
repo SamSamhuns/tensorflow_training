@@ -1,4 +1,5 @@
 import os
+import time
 import random
 import argparse
 
@@ -7,7 +8,7 @@ random.seed(random_seed)
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 from dataset_utils import _get_img_to_cid_list, _save_cls_map_file, _convert_dataset_to_tfr
 
@@ -37,15 +38,16 @@ from dataset_utils import _get_img_to_cid_list, _save_cls_map_file, _convert_dat
 
 
 def convert_to_tfrecord(img_dir_path, tfrecord_dir_path, cls_map_path, num_shards):
+    t0 = time.time()
     img_path_cid_list = _get_img_to_cid_list(img_dir_path)
+    random.shuffle(img_path_cid_list)
     _save_cls_map_file(img_dir_path, cls_map_path)
 
-    for _ in range(5):
-        random.shuffle(img_path_cid_list)
     _convert_dataset_to_tfr(img_path_cid_list=img_path_cid_list,
                             tfrecord_dir_path=tfrecord_dir_path,
                             num_shards=num_shards)
-    print(f'\nFinished converting {img_dir_path} to {tfrecord_dir_path}')
+    t1 = time.time()
+    print(f'\nFinished converting {img_dir_path} to {tfrecord_dir_path} in {t1- t0:.2f}s')
 
 
 def main():
