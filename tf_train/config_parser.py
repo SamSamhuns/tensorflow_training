@@ -12,7 +12,8 @@ from dotenv import dotenv_values
 from easydict import EasyDict as edict
 from tf_train.logging import setup_logging_config
 from tf_train.model.models_info import model_info_dict
-from tf_train.utils.common_utils import read_json, write_json, count_samples_in_tfr
+from tf_train.utils.tf_utils import count_samples_in_tfr
+from tf_train.utils.common_utils import read_json, write_json
 
 
 class ConfigParser:
@@ -60,9 +61,9 @@ class ConfigParser:
         config["os_vars"] = custom_env_vars
 
         # count total training and validation samples
-        config["data"]["total_training_samples"] = count_samples_in_tfr(
+        config["data"]["num_train_samples"] = count_samples_in_tfr(
             config["data"]["train_data_dir"])
-        config["data"]["total_validation_samples"] = count_samples_in_tfr(
+        config["data"]["num_val_samples"] = count_samples_in_tfr(
             config["data"]["val_data_dir"])
 
         # save updated config file to the checkpoint dir
