@@ -44,11 +44,7 @@ def optimize_model(model, loss, optimizer, loss_weights, metrics, callbacks, con
 
     if during_train_qnt and (not is_model_alr_qnt):
         model = tfmot.quantization.keras.quantize_model(model)
-        loss_new = {}
-        for key, value in loss.items():
-            loss_new['quant_' + key] = value
-        loss = loss_new.copy()
-        loss_new.clear()
+        loss = {'quant_' + key: val for key, val in loss.items()}
         model.compile(optimizer=optimizer, loss=loss,
                       loss_weights=loss_weights, metrics=metrics)
     if qtn_layer and (not is_model_alr_qnt):
@@ -57,11 +53,8 @@ def optimize_model(model, loss, optimizer, loss_weights, metrics, callbacks, con
                 apply_quantization_to_layer,
                 quantize_layer_names=config["optimization"]["prune"]["quantize_layer_names"]), )
         model = tfmot.quantization.keras.quantize_apply(model)
-        # loss_new = {} # Uncomment only if last layer is being quantized
-        # for key, value in loss.items():
-        # 	loss_new['quant_' + key] = value
-        # loss = loss_new.copy()
-        # loss_new.clear()
+        # Uncomment only if last layer is being clustered
+        # loss = {'quant_' + key: val for key, val in loss.items()}
         model.compile(optimizer=optimizer, loss=loss,
                       loss_weights=loss_weights, metrics=metrics)
 
@@ -79,11 +72,7 @@ def optimize_model(model, loss, optimizer, loss_weights, metrics, callbacks, con
     if use_clustering and (not is_model_alr_clustered):
         model = tfmot.clustering.keras.cluster_weights(
             model, **clustering_params)
-        loss_new = {}
-        for key, value in loss.items():
-            loss_new['cluster_' + key] = value
-        loss = loss_new.copy()
-        loss_new.clear()
+        loss = {'cluster_' + key: val for key, val in loss.items()}
         model.compile(optimizer=optimizer, loss=loss,
                       loss_weights=loss_weights, metrics=metrics)
     if cluster_layers and (not is_model_alr_clustered):
@@ -91,11 +80,9 @@ def optimize_model(model, loss, optimizer, loss_weights, metrics, callbacks, con
             model, clone_function=partial(
                 apply_clustering_to_layer,
                 cluster_layer_names=config["optimization"]["cluster"]["cluster_layer_names"]), )
-        # loss_new = {} # Uncomment only if last layer is being clustered
-        # for key, value in loss.items():
-        # 	loss_new['quant_' + key] = value
-        # loss = loss_new.copy()
-        # loss_new.clear()
+        # Uncomment only if last layer is being clustered
+        # loss = {'cluster_' + key: val for key, val in loss.items()}
+
         model.compile(optimizer=optimizer, loss=loss,
                       loss_weights=loss_weights, metrics=metrics)
 
@@ -116,11 +103,7 @@ def optimize_model(model, loss, optimizer, loss_weights, metrics, callbacks, con
     if use_pruning and (not is_model_alr_pruned):
         model = tfmot.sparsity.keras.prune_low_magnitude(
             model, **pruning_params)
-        loss_new = {}
-        for key, value in loss.items():
-            loss_new['prune_low_magnitude_' + key] = value
-        loss = loss_new.copy()
-        loss_new.clear()
+        loss = {'prune_low_magnitude_' + key: val for key, val in loss.items()}
         model.compile(optimizer=optimizer, loss=loss,
                       loss_weights=loss_weights, metrics=metrics)
         pruning_callbacks = [tfmot.sparsity.keras.UpdatePruningStep(),
@@ -131,11 +114,9 @@ def optimize_model(model, loss, optimizer, loss_weights, metrics, callbacks, con
             model, clone_function=partial(
                 apply_pruning_to_layer,
                 prune_layer_names=config["optimization"]["prune"]["prune_layer_names"]))
-        # loss_new = {} # Uncomment only if last layer is being pruned
-        # for key, value in loss.items():
-        #     loss_new['prune_' + key] = value
-        # loss = loss_new.copy()
-        # loss_new.clear()
+        # Uncomment only if last layer is being clustered
+        # loss = {'prune_' + key: val for key, val in loss.items()}
+
         model.compile(optimizer=optimizer, loss=loss,
                       loss_weights=loss_weights, metrics=metrics)
         pruning_callbacks = [tfmot.sparsity.keras.UpdatePruningStep(),

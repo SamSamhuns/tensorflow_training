@@ -13,11 +13,8 @@ def _parse_train_fn(example_proto, config):
                                               'image/channel': tf.io.FixedLenFeature([], tf.int64),
                                               'class_id': tf.io.FixedLenFeature([], tf.int64),
                                           })
-    image_rgb = tf.io.decode_raw(features['image/img'], tf.uint8)
-    height = tf.cast(features['image/height'], tf.int64)
-    width = tf.cast(features['image/width'], tf.int64)
+    image_rgb = tf.io.decode_jpeg(features["image/img"], channels=3)
     class_id = tf.cast(features['class_id'], tf.int64)
-    image_rgb = tf.reshape(image_rgb, tf.stack([height, width, 3]))
 
     # choose train image preprocessing
     # thresholds chosen after ensuring the image augmentations repr realistic changes
@@ -49,27 +46,15 @@ def _parse_train_fn(example_proto, config):
         class_id, config["data"]["num_classes"], on_value=1, off_value=0)
 
     gt_dict = {config.model.type: one_hot_class}
-
     if config["optimization"]["quantize"]["during_training_quantization"]:
-        gt_dict_new = {}
-        for key, value in gt_dict.items():
-            gt_dict_new['quant_' + key] = value
-        gt_dict = gt_dict_new.copy()
-        gt_dict_new.clear()
+        gt_dict = {'quant_' + key: val for key, val in gt_dict.items()}
 
     if config["optimization"]["cluster"]["use_clustering"]:
-        gt_dict_new = {}
-        for key, value in gt_dict.items():
-            gt_dict_new['cluster_' + key] = value
-        gt_dict = gt_dict_new.copy()
-        gt_dict_new.clear()
+        gt_dict = {'cluster_' + key: val for key, val in gt_dict.items()}
 
     if config["optimization"]["prune"]["use_pruning"]:
-        gt_dict_new = {}
-        for key, value in gt_dict.items():
-            gt_dict_new['prune_low_magnitude_' + key] = value
-        gt_dict = gt_dict_new.copy()
-        gt_dict_new.clear()
+        gt_dict = {'prune_low_magnitude_' + key: val for key, val in gt_dict.items()}
+
     return feature_dict, gt_dict
 
 
@@ -83,11 +68,8 @@ def _parse_val_fn(example_proto, config):
                                               'image/channel': tf.io.FixedLenFeature([], tf.int64),
                                               'class_id': tf.io.FixedLenFeature([], tf.int64),
                                           })
-    image_rgb = tf.io.decode_raw(features['image/img'], tf.uint8)
-    height = tf.cast(features['image/height'], tf.int64)
-    width = tf.cast(features['image/width'], tf.int64)
+    image_rgb = tf.io.decode_jpeg(features["image/img"], channels=3)
     class_id = tf.cast(features['class_id'], tf.int64)
-    image_rgb = tf.reshape(image_rgb, tf.stack([height, width, 3]))
 
     image_rgb = tf.image.central_crop(image_rgb, 0.8)
     image_rgb = tf.cast(image_rgb, tf.float32, name='cast_input2')
@@ -108,25 +90,13 @@ def _parse_val_fn(example_proto, config):
 
     gt_dict = {config.model.type: one_hot_class}
     if config["optimization"]["quantize"]["post_training_quantization"]:
-        gt_dict_new = {}
-        for key, value in gt_dict.items():
-            gt_dict_new['quant_' + key] = value
-        gt_dict = gt_dict_new.copy()
-        gt_dict_new.clear()
+        gt_dict = {'quant_' + key: val for key, val in gt_dict.items()}
 
     if config["optimization"]["cluster"]["use_clustering"]:
-        gt_dict_new = {}
-        for key, value in gt_dict.items():
-            gt_dict_new['cluster_' + key] = value
-        gt_dict = gt_dict_new.copy()
-        gt_dict_new.clear()
+        gt_dict = {'cluster_' + key: val for key, val in gt_dict.items()}
 
     if config["optimization"]["prune"]["use_pruning"]:
-        gt_dict_new = {}
-        for key, value in gt_dict.items():
-            gt_dict_new['prune_low_magnitude_' + key] = value
-        gt_dict = gt_dict_new.copy()
-        gt_dict_new.clear()
+        gt_dict = {'prune_low_magnitude_' + key: val for key, val in gt_dict.items()}
 
     return feature_dict, gt_dict
 
@@ -143,12 +113,12 @@ def train_input_fn(config, bsize=None):
                                       num_parallel_reads=tfr_parallel_read)
     loaded_parse_train_fn = partial(_parse_train_fn, config=config)
     dataset = dataset.map(loaded_parse_train_fn,
-                          num_parallel_calls=tf.data.experimental.AUTOTUNE)
+                          num_parallel_calls=tf.data.AUTOTUNE)
+    dataset = dataset.shuffle(bsize * 4, reshuffle_each_iteration=True)
     dataset = dataset.batch(bsize, drop_remainder=False)
-    dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
+    dataset = dataset.prefetch(tf.data.AUTOTUNE)
     # dataset = dataset.cache()
     # dataset = dataset.repeat()
-    dataset = dataset.shuffle(bsize * 4, reshuffle_each_iteration=True)
     return dataset
 
 
@@ -164,12 +134,12 @@ def val_input_fn(config, bsize=None):
                                       num_parallel_reads=tfr_parallel_read)
     loaded_parse_val_fn = partial(_parse_val_fn, config=config)
     dataset = dataset.map(loaded_parse_val_fn,
-                          num_parallel_calls=tf.data.experimental.AUTOTUNE)
+                          num_parallel_calls=tf.data.AUTOTUNE)
+    dataset = dataset.shuffle(bsize * 4, reshuffle_each_iteration=True)
     dataset = dataset.batch(bsize, drop_remainder=False)
-    dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
+    dataset = dataset.prefetch(tf.data.AUTOTUNE)
     dataset = dataset.cache()
-    dataset = dataset.shuffle(
-        bsize * 4, reshuffle_each_iteration=True)
+    # dataset = dataset.repeat()
     return dataset
 
 
