@@ -114,11 +114,11 @@ def train_input_fn(config, bsize=None):
     loaded_parse_train_fn = partial(_parse_train_fn, config=config)
     dataset = dataset.map(loaded_parse_train_fn,
                           num_parallel_calls=tf.data.AUTOTUNE)
-    dataset = dataset.shuffle(bsize * 4, reshuffle_each_iteration=True)
-    dataset = dataset.batch(bsize, drop_remainder=False)
-    dataset = dataset.prefetch(tf.data.AUTOTUNE)
     # dataset = dataset.cache()
-    # dataset = dataset.repeat()
+    dataset = dataset.shuffle(bsize * 4, reshuffle_each_iteration=True)
+    dataset = dataset.prefetch(tf.data.AUTOTUNE)
+    dataset = dataset.repeat()
+    dataset = dataset.batch(bsize, drop_remainder=False)
     return dataset
 
 
@@ -135,11 +135,11 @@ def val_input_fn(config, bsize=None):
     loaded_parse_val_fn = partial(_parse_val_fn, config=config)
     dataset = dataset.map(loaded_parse_val_fn,
                           num_parallel_calls=tf.data.AUTOTUNE)
-    dataset = dataset.shuffle(bsize * 4, reshuffle_each_iteration=True)
-    dataset = dataset.batch(bsize, drop_remainder=False)
-    dataset = dataset.prefetch(tf.data.AUTOTUNE)
     dataset = dataset.cache()
-    # dataset = dataset.repeat()
+    dataset = dataset.shuffle(bsize * 4, reshuffle_each_iteration=True)
+    dataset = dataset.prefetch(tf.data.AUTOTUNE)
+    dataset = dataset.repeat()
+    dataset = dataset.batch(bsize, drop_remainder=False)
     return dataset
 
 

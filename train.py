@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 load_dotenv(".env")
 
 import io
+import math
 import argparse
 import collections
 from datetime import datetime
@@ -11,7 +12,6 @@ from contextlib import redirect_stdout
 
 import tensorflow as tf
 import tensorflow_model_optimization as tfmot
-from tensorflow.python.client import device_lib
 
 import tf_train.loss as module_loss
 import tf_train.logging as module_log
@@ -29,18 +29,19 @@ def train(config):
     config.setup_logger('train')
 
     # mixed precision training https://www.tensorflow.org/guide/mixed_precision, default=float32
-    tf.keras.mixed_precision.set_global_policy(config["mixed_precision_global_policy"])
-    print("mixed_precision global_policy set to:", tf.keras.mixed_precision.global_policy())
+    tf.keras.mixed_precision.set_global_policy(
+        config["mixed_precision_global_policy"])
+    config.logger.info("mixed_precision global_policy set to:",
+                       tf.keras.mixed_precision.global_policy())
 
-    tf.executing_eagerly()
+    config.logger.info(f"TF executing eagerly: {tf.executing_eagerly()}")
     tf.keras.backend.clear_session()
     tf.config.optimizer.set_jit(False)
     # tf.config.experimental.enable_mlir_graph_optimization()  # gives a channel depth error
 
-    local_device_protos = device_lib.list_local_devices()
     ngpu_avai = len(tf.config.list_physical_devices('GPU'))
     config.logger.info(
-        f"Available devices: {[x.name for x in local_device_protos]}")
+        f"Available devices: {[x.name for x in tf.config.list_physical_devices()]}")
     config.logger.info(f"Num GPUs used: {ngpu_avai}")
 
     if ngpu_avai > 0:
@@ -49,7 +50,8 @@ def train(config):
             devices=[f"/gpu:{dev}" for dev in range(ngpu_avai)])
     else:
         config.logger.info("Training on CPU")
-        mirrored_strategy = tf.distribute.MirroredStrategy(devices=["/cpu:0"])
+        mirrored_strategy = tf.distribute.MirroredStrategy(
+            devices=["/cpu:0"])
     # Convert and infer from pb file https://medium.com/@pipidog/how-to-convert-your-keras-models-to-tensorflow-e471400b886a
     with mirrored_strategy.scope():
 
@@ -124,17 +126,23 @@ def train(config):
         model_summary = f.getvalue()
         config.logger.info(model_summary)
 
+        train_steps = math.ceil(
+            config["data"]["num_train_samples"] / config["data"]["train_bsize"])
+        val_steps = math.ceil(
+            config["data"]["num_val_samples"] / config["data"]["val_bsize"])
+
         start_time = datetime.today().timestamp()
         model.fit(x=train_input_fn(config),
                   epochs=config["trainer"]["epochs"],
+                  steps_per_epoch=train_steps,
                   validation_data=val_input_fn(config),
+                  validation_steps=val_steps,
                   validation_freq=config["trainer"]["val_freq"],
                   callbacks=callbacks, verbose=config["trainer"]["verbosity"],
                   initial_epoch=config["trainer"]["initial_epoch"],
                   workers=config["trainer"]["num_workers"],
                   use_multiprocessing=config["trainer"]["use_multiproc"])
         training_time = datetime.today().timestamp() - start_time
-
         save_model(model, training_time, config)
 
         # print model input, output shapes
