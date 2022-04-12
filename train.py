@@ -21,8 +21,8 @@ from tf_train.model import get_model
 from tf_train.utils import write_json
 from tf_train.saving import save_model
 from tf_train.config_parser import ConfigParser
-from tf_train.preprocessing import train_input_fn, val_input_fn
 from tf_train.model_optimization import optimize_model
+from tf_train.pipelines import train_input_fn, val_input_fn
 
 
 def train(config):
@@ -31,8 +31,7 @@ def train(config):
     # mixed precision training https://www.tensorflow.org/guide/mixed_precision, default=float32
     tf.keras.mixed_precision.set_global_policy(
         config["mixed_precision_global_policy"])
-    config.logger.info("mixed_precision global_policy set to:",
-                       tf.keras.mixed_precision.global_policy())
+    config.logger.info(f"mixed_precision global_policy set to: {tf.keras.mixed_precision.global_policy()}")
 
     config.logger.info(f"TF executing eagerly: {tf.executing_eagerly()}")
     tf.keras.backend.clear_session()
