@@ -45,6 +45,19 @@ i.e.
 
 Note: ImageNet style ordering of data is also supported i.e. images ordered under subdirectories inside the class directories.
 
+i.e.
+
+    dataset
+          |_ class_1
+                    |_ 00
+                        |_ img1
+                        |_ img2
+                    |_ 01
+                        |_ img1
+                        |_ img2
+                    |_ ...
+          |_ ...
+
 ### Data Duplication and Cleaning
 
 If all the classes do not have equal number of training samples, data Duplication can be done.
@@ -69,9 +82,10 @@ $ bash scripts/count_files_per_subdir.sh data/split_bird_dataset
 
 ```shell
 # convert train files into train tfrecord, select NUM_SHARDS so that each shard has a size of 100 MB+
-$ python data_preparation/_2_convert_imgs_to_tfrecord.py --sd data/split_bird_dataset/train --td data/tfrecord_bird_dataset/train --cp CLASS_MAP_TXT_PATH --ns NUM_SHARDS
+$ python data_preparation/_2_convert_imgs_to_tfrecord.py --sd data/split_bird_dataset/train --td data/tfrecord_bird_dataset/train --cp CLASS_MAP_TXT_PATH --ns NUM_SAMPLES_PER_SHARDS
 # convert val files into val tfrecord, select NUM_SHARDS so that each shard has a size of 100 MB+
-$ python data_preparation/_2_convert_imgs_to_tfrecord.py --sd data/split_bird_dataset/val --td data/tfrecord_bird_dataset/val --cp CLASS_MAP_TXT_PATH --ns NUM_SHARDS
+$ python data_preparation/_2_convert_imgs_to_tfrecord.py --sd data/split_bird_dataset/val --td data/tfrecord_bird_dataset/val --cp CLASS_MAP_TXT_PATH --ns NUM_SAMPLES_PER_SHARDS
+# to use multiprocessing use the --mt flag
 ```
 
 Note: test dataset is not converted to tfrecord as fast-loading is not a priority as we only run through the test data once.
