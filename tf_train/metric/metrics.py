@@ -101,8 +101,6 @@ def acc_per_class(target: np.array, output: np.array, num_classes: int, decimals
 
 
 def top_k_acc(target: np.array, output: np.array, k: int):
-    if len(output.shape) == 2:  # if scores classes are provided
-        output = np.argmax(output, axis=1)
     return top_k_accuracy_score(y_true=target, y_score=output, k=k)
 
 

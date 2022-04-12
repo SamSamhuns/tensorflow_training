@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 load_dotenv(".env")
 
 import io
+import time
 import argparse
 from datetime import datetime
 from contextlib import redirect_stdout
@@ -35,6 +36,7 @@ def test(config):
     h, w, _ = config.model.args.input_shape
     classes_list = get_class_name_list(config["data"]["class_map_txt_path"])
 
+    t0 = time.time()
     test_ds = tf.keras.preprocessing.image_dataset_from_directory(
         config["data"]["test_data_dir"],
         labels='inferred',
@@ -91,6 +93,8 @@ def test(config):
 
     log = {met: met_val for met, met_val in met_val_dict.items()}
     config.logger.info(f"test: {(log)}")
+    t1 = time.time()
+    config.logger.info(f"Time taken for testing: {t1 - t0:.3f}s")
 
 
 def main():
