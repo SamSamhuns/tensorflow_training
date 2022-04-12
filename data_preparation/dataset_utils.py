@@ -1,9 +1,9 @@
 # refernce: https://keras.io/examples/keras_recipes/creating_tfrecords/
 import os
-import sys
-import math
 import glob
+import tqdm
 import os.path as osp
+import multiprocessing
 from typing import Union, List
 
 import tensorflow as tf
@@ -49,7 +49,13 @@ def image_to_tfexample(img, class_id, h, w, c):
     return tf.train.Example(features=tf.train.Features(feature=feature))
 
 
-def _get_img_to_cid_list(dataset_dir) -> List[Union[str, int]]:
+def _get_tfrecord_path(shard_id, num_samples_in_shard, tfrecord_dir_path) -> str:
+    output_path = osp.join(
+        tfrecord_dir_path, f"{shard_id+1:05d}_{num_samples_in_shard:06d}_samples.tfrecord")
+    return output_path
+
+
+def get_img_to_cid_list(dataset_dir) -> List[Union[str, int]]:
     """
     Get image path to class id list
     """
@@ -71,7 +77,7 @@ def _get_img_to_cid_list(dataset_dir) -> List[Union[str, int]]:
     return img_path_cid_list
 
 
-def _save_cls_map_file(dataset_dir, cls_map_path) -> None:
+def save_cls_map_file(dataset_dir, cls_map_path) -> None:
     """
     Save class name to class id mapping file at cls_map_path
     """
@@ -88,40 +94,85 @@ def _save_cls_map_file(dataset_dir, cls_map_path) -> None:
                 class_id += 1
 
 
-def _get_tfrecord_path(shard_id, tfrecord_dir_path) -> str:
-    output_path = osp.join(tfrecord_dir_path, f"{shard_id + 1:06d}.tfrecord")
-    return output_path
+def write_imgs_to_tfr_shard(img_path_cid_list, start_idx, end_idx, shard_id, output_tfr_path):
+    """
+    Write "image,class_id" tuples from img_path_cid_list[start_idx, end_idx)
+    with shard with id shard_id to output_tfr_path tfrecord file
+    """
+    success_count = 0
+    num_samples_in_shard = end_idx - start_idx
+    with tf.io.TFRecordWriter(output_tfr_path) as tfr_writer, tqdm.tqdm(total=num_samples_in_shard) as pbar:
+        for i in range(start_idx, end_idx):
+            try:
+                img_path, class_id = img_path_cid_list[i]
+                # read as RGB channels & drop alpha channel if present
+                img = tf.io.decode_image(
+                    tf.io.read_file(img_path), channels=3)
+
+                h, w, c = img.shape
+                example = image_to_tfexample(
+                    img, class_id, h, w, c)
+                tfr_writer.write(example.SerializeToString())
+                pbar.update(1)
+                success_count += 1
+            except Exception as e:
+                print(f"{e}. Error reading {img_path}")
+    return success_count
 
 
-def _convert_dataset_to_tfr(img_path_cid_list, tfrecord_dir_path, num_shards) -> None:
-    num_files = len(img_path_cid_list)
-    num_per_shard = int(math.ceil(num_files / float(num_shards)))
-    success_count = fail_count = 0
+def convert_dataset_to_tfr_single_proc(img_path_cid_list, tfrecord_dir_path, num_samples_per_shard) -> None:
+    num_samples = len(img_path_cid_list)
+
+    num_shards = num_samples // num_samples_per_shard
+    if num_samples % num_samples_per_shard:
+        num_shards += 1  # add one record if there are any remaining samples
+
+    success_count = 0
     for shard_id in range(num_shards):
+        start_idx = shard_id * num_samples_per_shard
+        end_idx = min((shard_id + 1) * num_samples_per_shard, num_samples)
+        num_samples_in_shard = end_idx - start_idx if end_idx - start_idx > 0 else 0
         output_tfr_path = _get_tfrecord_path(
-            shard_id, tfrecord_dir_path=tfrecord_dir_path)
-        with tf.io.TFRecordWriter(output_tfr_path) as tfrecord_writer:
-            start_ndx = shard_id * num_per_shard
-            end_ndx = min((shard_id + 1) * num_per_shard, num_files)
-            for i in range(start_ndx, end_ndx):
-                try:
-                    img_path, class_id = img_path_cid_list[i]
-                    # read as RGB channels & drop alpha channel if present
-                    img = tf.io.decode_image(tf.io.read_file(img_path), channels=3)
+            shard_id, num_samples_in_shard, tfrecord_dir_path)
 
-                    h, w, c = img.shape
-                    example = image_to_tfexample(
-                        img, class_id, h, w, c)
-                    tfrecord_writer.write(example.SerializeToString())
-                    sys.stdout.write(
-                        f'\r>> Wrote record {i+1}/{num_files} in shard {shard_id+1}')
-                    sys.stdout.flush()
-                    success_count += 1
-                except Exception as e:
-                    fail_count += 1
-                    print(f"{e}. Error reading {img_path}")
-    print(f"{success_count} image(s) converted to {num_shards} tfrecords")
-    if fail_count > 0:
+        success_count += write_imgs_to_tfr_shard(
+            img_path_cid_list, start_idx, end_idx, shard_id, output_tfr_path)
+    print(f"\n{success_count} image(s) converted to {num_shards} tfrecords")
+    fail_count = num_samples - success_count
+    if fail_count:
         print(f"\n{fail_count} image(s) could not be processed into tfrecords")
-    sys.stdout.write('\n')
-    sys.stdout.flush()
+
+
+def convert_dataset_to_tfr_mult_proc(img_path_cid_list, tfrecord_dir_path, num_samples_per_shard) -> None:
+
+    def _multi_process_tfr_write(func, img_path_cid_list, tfrecord_dir_path, num_shards):
+        pool = multiprocessing.Pool()
+
+        mult_func_args = []
+        for shard_id in range(num_shards):
+            start_idx = shard_id * num_samples_per_shard
+            end_idx = min((shard_id + 1) * num_samples_per_shard, num_samples)
+            num_samples_in_shard = end_idx - start_idx if end_idx - start_idx > 0 else 0
+            output_tfr_path = _get_tfrecord_path(
+                shard_id, num_samples_in_shard, tfrecord_dir_path)
+
+            mult_func_args.append(
+                (img_path_cid_list, start_idx, end_idx, shard_id, output_tfr_path))
+
+        results = pool.starmap(func, mult_func_args)
+        pool.close()
+        pool.join()
+        success_count = sum(results)
+        return success_count
+
+    num_samples = len(img_path_cid_list)
+    num_shards = num_samples // num_samples_per_shard
+    if num_samples % num_samples_per_shard:
+        num_shards += 1  # add one record if there are any remaining samples
+
+    success_count = _multi_process_tfr_write(
+        write_imgs_to_tfr_shard, img_path_cid_list, tfrecord_dir_path, num_shards)
+    print(f"\n{success_count} image(s) converted to {num_shards} tfrecords")
+    fail_count = num_samples - success_count
+    if fail_count:
+        print("\n{fail_count} image(s) could not be processed into tfrecords")
