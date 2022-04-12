@@ -24,16 +24,18 @@
     "ckpt_fmt": "e{epoch:03d}_ta{accuracy:.2f}_tl{loss:.2f}_va{val_accuracy:.2f}_vl{val_loss:.2f}"
   },
   "data": {
-    "train_data_dir": "/home/sam/tensorflow_training/data/tf_ildt/train/",
-    "val_data_dir": "/home/sam/tensorflow_training/data/tf_ildt/val/",
-    "test_data_dir": "data/person_no_person_data_tfr_split/test_mini/",
+    "train_data_dir": "data/tf_ildt/train/",
+    "val_data_dir": "data/tf_ildt/val/",
+    "test_data_dir": "data/ildt_test/",
     "train_bsize": 32,
     "val_bsize": 32,
     "test_bsize": 32,
-    "class_map_txt_path": "data/ildt_split_tfr/dataset_classmap.txt",
+    "class_map_txt_path": "data/dataset_classmap.txt",
     "tfrecord_parallel_read": 20,
     "shuffle": true,
-    "num_classes": 100
+    "num_classes": 100,
+    "num_train_samples": null,
+    "num_val_samples": null
   },
   "optimizer": {
     "type": "SGD",

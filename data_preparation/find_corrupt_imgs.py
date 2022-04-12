@@ -1,9 +1,10 @@
 import os
 import glob
-import imageio
 import argparse
 import os.path as osp
+
 from tqdm import tqdm
+import tensorflow as tf
 
 
 def validate_imgs(raw_data_path, corrupt_flist_txt, remove):
@@ -12,17 +13,16 @@ def validate_imgs(raw_data_path, corrupt_flist_txt, remove):
     with open(corrupt_flist_txt, 'w') as fw:
         for dir_path in tqdm(dir_list):
             img_list = glob.glob(osp.join(dir_path, "*"))
-            for img_name in img_list:
+            for img_path in img_list:
                 try:
-                    img = imageio.imread(img_name, pilmode="RGB")
-                    img = img[..., :3]
+                    tf.io.decode_image(tf.io.read_file(img_path))
                 except Exception as e:
-                    print(f"{e}. imageio could not read file {img_name}")
-                    fw.write(img_name + '\n')
+                    print(f"{e}. tf.io could not read file {img_path}")
+                    fw.write(img_path + '\n')
                     corrupt_file_count += 1
-                    if os.path.exists(img_name) and remove:
-                        print(f"Removing {img_name}")
-                        os.remove(img_name)
+                    if os.path.exists(img_path) and remove:
+                        print(f"Removing {img_path}")
+                        os.remove(img_path)
     print(f"Number of corrupt images discovered: {corrupt_file_count}")
 
 
