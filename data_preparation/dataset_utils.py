@@ -1,7 +1,6 @@
 # refernce: https://keras.io/examples/keras_recipes/creating_tfrecords/
 import os
 import glob
-import tqdm
 import os.path as osp
 import multiprocessing
 from typing import Union, List
@@ -96,12 +95,11 @@ def save_cls_map_file(dataset_dir, cls_map_path) -> None:
 
 def write_imgs_to_tfr_shard(img_path_cid_list, start_idx, end_idx, shard_id, output_tfr_path):
     """
-    Write "image,class_id" tuples from img_path_cid_list[start_idx, end_idx)
+    Write "image,class_id" tuples from img_path_cid_list
     with shard with id shard_id to output_tfr_path tfrecord file
     """
     success_count = 0
-    num_samples_in_shard = end_idx - start_idx
-    with tf.io.TFRecordWriter(output_tfr_path) as tfr_writer, tqdm.tqdm(total=num_samples_in_shard) as pbar:
+    with tf.io.TFRecordWriter(output_tfr_path) as tfr_writer:
         for i in range(start_idx, end_idx):
             try:
                 img_path, class_id = img_path_cid_list[i]
@@ -113,7 +111,6 @@ def write_imgs_to_tfr_shard(img_path_cid_list, start_idx, end_idx, shard_id, out
                 example = image_to_tfexample(
                     img, class_id, h, w, c)
                 tfr_writer.write(example.SerializeToString())
-                pbar.update(1)
                 success_count += 1
             except Exception as e:
                 print(f"{e}. Error reading {img_path}")
@@ -143,10 +140,10 @@ def convert_dataset_to_tfr_single_proc(img_path_cid_list, tfrecord_dir_path, num
         print(f"\n{fail_count} image(s) could not be processed into tfrecords")
 
 
-def convert_dataset_to_tfr_mult_proc(img_path_cid_list, tfrecord_dir_path, num_samples_per_shard) -> None:
+def convert_dataset_to_tfr_mult_proc(img_path_cid_list, tfrecord_dir_path, num_samples_per_shard, num_processes=30) -> None:
 
-    def _multi_process_tfr_write(func, img_path_cid_list, tfrecord_dir_path, num_shards):
-        pool = multiprocessing.Pool()
+    def _multi_process_tfr_write(func, img_path_cid_list, tfrecord_dir_path, num_shards, num_processes):
+        pool = multiprocessing.Pool(processes=num_processes)
 
         mult_func_args = []
         for shard_id in range(num_shards):
@@ -171,7 +168,7 @@ def convert_dataset_to_tfr_mult_proc(img_path_cid_list, tfrecord_dir_path, num_s
         num_shards += 1  # add one record if there are any remaining samples
 
     success_count = _multi_process_tfr_write(
-        write_imgs_to_tfr_shard, img_path_cid_list, tfrecord_dir_path, num_shards)
+        write_imgs_to_tfr_shard, img_path_cid_list, tfrecord_dir_path, num_shards, num_processes)
     print(f"\n{success_count} image(s) converted to {num_shards} tfrecords")
     fail_count = num_samples - success_count
     if fail_count:
