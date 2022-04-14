@@ -60,11 +60,21 @@ class ConfigParser:
         custom_env_vars = dotenv_values(".env")
         config["os_vars"] = custom_env_vars
 
-        # count total training and validation samples
-        config["data"]["num_train_samples"] = count_samples_in_tfr(
-            config["data"]["train_data_dir"])
-        config["data"]["num_val_samples"] = count_samples_in_tfr(
-            config["data"]["val_data_dir"])
+        # count total training and validation samples if they are not explicitely provided
+        num_train = config["data"]["num_train_samples"]
+        if num_train:
+            print(f"Note: num_train_samples: {num_train} was provided in config.",
+                  "Make sure this is correct since train epoch size depends on this")
+        else:
+            config["data"]["num_train_samples"] = count_samples_in_tfr(
+                config["data"]["train_data_dir"])
+        num_val = config["data"]["num_val_samples"]
+        if num_val:
+            print(f"Note: num_val_samples: {num_val} was provided in config.",
+                  "Make sure this is correct since val epoch size depends on this")
+        else:
+            config["data"]["num_val_samples"] = count_samples_in_tfr(
+                config["data"]["val_data_dir"])
 
         # save updated config file to the checkpoint dir
         write_json(config, self.save_dir / 'config.json')
