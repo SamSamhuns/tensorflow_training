@@ -15,7 +15,7 @@ model_info_dict = {
         {'type': 'facenet_pred',
          'args': {
              'input_shape': (160, 160, 3),
-             'weights': "model_store/facenet_weights/facenet_keras.h5",
+             'weights': "model_store/facenet_weights/facenet_keras_p38"
          },
          'gives_logits': False,
          'parent_module': facenet,
