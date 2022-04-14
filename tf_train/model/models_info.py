@@ -1,5 +1,5 @@
 # in-built models are available at: https://www.tensorflow.org/api_docs/python/tf/keras/applications
-from tf_train.model.models import facenet
+from tf_train.model.models import facenet, resnet50_places365
 from tf_train.model.models import base
 import tensorflow as tf
 
@@ -21,6 +21,16 @@ model_info_dict = {
          'parent_module': facenet,
          'module': facenet.load_facenet_model,
          'final_module': facenet.FacenetPred},
+    'Resnet50_places365':
+        {'type': 'resnet50_places365_pred',
+         'args': {
+             'input_shape': (224, 224, 3),
+             'weights': "model_store/resnet50_places365_weights/resnet50_places365"
+         },
+         'gives_logits': False,
+         'parent_module': resnet50_places365,
+         'module': resnet50_places365.load_resnet50_places365_model,
+         'final_module': resnet50_places365.Resnet50Places365Pred},
     'Densenet121':
         {'type': 'classifier',
          'args': {
