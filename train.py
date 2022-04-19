@@ -104,7 +104,7 @@ def train(config):
         if resume_ckpt is None:
             config.logger.info("Cold Starting")
             model = get_model(config)
-            tf.config.optimizer.set_jit(True)
+            tf.config.optimizer.set_jit("autoclustering")
             model.compile(optimizer=optimizer, loss=loss,
                           loss_weights=loss_weights, metrics=metrics)
         else:
