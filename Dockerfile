@@ -6,6 +6,11 @@ LABEL maintainer="fname.lname@domain.com"
 # set work directory
 WORKDIR /tensorflow_training
 
+# setup virtual env for python
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
 # install python dependencies
 COPY ./requirements.txt .
 RUN pip install --upgrade pip
