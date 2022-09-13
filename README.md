@@ -80,6 +80,8 @@ bash scripts/count_files_per_subdir.sh data/split_bird_dataset
 
 ### Convert Data to tfrecords for faster training
 
+Note: The test split should not be converted into tfrecords and the original `data->class_sub_directory` format should be used.
+
 ```shell
 # convert train files into train tfrecord, select NUM_SHARDS so that each shard has a size of 100 MB+
 python data_preparation/convert_imgs_to_tfrecord.py --sd data/split_bird_dataset/train --td data/tfrecord_bird_dataset/train --cp CLASS_MAP_TXT_PATH --ns NUM_SAMPLES_PER_SHARDS

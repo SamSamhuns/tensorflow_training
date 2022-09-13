@@ -126,11 +126,11 @@ def main():
                         type=str, dest="target_data_path", required=True,
                         help="Target dataset path where imgs will be sep into train, val or test")
     parser.add_argument('--vs', '--val_split',
-                        type=float, dest="val_split", default=0.05,
-                        help='Val data split proportion. Pass 0 to avoid splitting. (default: %(default)s)')
+                        type=float, dest="val_split", default=0.,
+                        help='Val data split proportion. Pass 0.05 for 5% split and so on. (default: %(default)s)')
     parser.add_argument('--ts', '--test_split',
-                        type=float, dest="test_split", default=0.10,
-                        help='Test data split proportion.  Pass 0 to avoid splitting. (default: %(default)s)')
+                        type=float, dest="test_split", default=0.,
+                        help='Test data split proportion. Pass 0.05 for 5% split and so on. (default: %(default)s)')
     args = parser.parse_args()
     split_train_test(
         args.source_data_path, args.target_data_path, args.val_split, args.test_split)

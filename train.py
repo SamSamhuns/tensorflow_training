@@ -25,7 +25,7 @@ from tf_train.model_optimization import optimize_model
 from tf_train.pipelines import train_input_fn, val_input_fn
 
 
-def train(config):
+def train(config: ConfigParser):
     config.setup_logger('train')
 
     # mixed precision training https://www.tensorflow.org/guide/mixed_precision, default=float32
@@ -142,18 +142,18 @@ def train(config):
                   workers=config["trainer"]["num_workers"],
                   use_multiprocessing=config["trainer"]["use_multiproc"])
         training_time = datetime.today().timestamp() - start_time
-        save_model(model, training_time, config)
+    save_model(model, training_time, config)
 
-        # print model input, output shapes
-        try:
-            loaded_model = tf.keras.models.load_model(
-                config.save_dir / "retrain_model")
-            infer = loaded_model.signatures["serving_default"]
-            config.logger.info(infer.structured_input_signature)
-            config.logger.info(infer.structured_outputs)
-        except Exception as e:
-            config.logger.error(
-                f"{e}. Could not get model input-output name and shapes.")
+    # print model input, output shapes
+    try:
+        loaded_model = tf.keras.models.load_model(
+            config.save_dir / "retrain_model")
+        infer = loaded_model.signatures["serving_default"]
+        config.logger.info(infer.structured_input_signature)
+        config.logger.info(infer.structured_outputs)
+    except Exception as e:
+        config.logger.error(
+            f"{e}. Could not get model input-output name and shapes.")
 
 
 def main():
