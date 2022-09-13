@@ -100,8 +100,8 @@ def acc_per_class(target: np.array, output: np.array, num_classes: int, decimals
     return np.around(conf_mat.diagonal() / conf_mat.sum(1), decimals)
 
 
-def top_k_acc(target: np.array, output: np.array, k: int):
-    return top_k_accuracy_score(y_true=target, y_score=output, k=k)
+def top_k_acc(target: np.array, output: np.array, k: int, num_classes: int):
+    return top_k_accuracy_score(target, output, k=k, labels=np.arange(num_classes))
 
 
 def classification_report_sklearn(target: np.array, output: np.array, target_names: list = None):

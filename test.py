@@ -15,7 +15,7 @@ import tf_train.metric as module_metric
 from tf_train.config_parser import ConfigParser
 
 
-def get_class_name_list(mapping_file):
+def get_class_name_list(mapping_file: str):
     """ mapping_file must have fmt
     0   class1
     1   class2
@@ -29,7 +29,7 @@ def get_class_name_list(mapping_file):
     return sorted(map_list)
 
 
-def test(config):
+def test(config: ConfigParser):
     config.setup_logger('test')
 
     model = tf.keras.models.load_model(config.resume)
@@ -76,9 +76,9 @@ def test(config):
 
     met_val_dict = {}
     met_func_dict = {}
-    # load metric funcs with neccesary params
+    # load metric funcs with necessary params
     for _metric in config["test_metrics"]:
-        if _metric in {"acc_per_class", "confusion_matrix"}:
+        if _metric in {"acc_per_class", "confusion_matrix"} or config["test_metrics"][_metric]["type"] in {"top_k_acc"}:
             mfunc = config.init_ftn(["test_metrics", _metric], module_metric,
                                     num_classes=n_cls)
         elif _metric in {"plot_confusion_matrix"}:
