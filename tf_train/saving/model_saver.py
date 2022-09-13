@@ -5,17 +5,56 @@ import tensorflow_model_optimization as tfmot
 from tf_train.pipelines import representative_data_gen as repr_data_gen
 
 
-def get_flops(tf_model_path):
-    session = tf.compat.v1.Session()
-    graph = tf.compat.v1.get_default_graph()
-    with graph.as_default():
-        with session.as_default():
-            _ = tf.keras.models.load_model(tf_model_path)
-            run_meta = tf.compat.v1.RunMetadata()
-            opts = tf.compat.v1.profiler.ProfileOptionBuilder.float_operation()
-            flops = tf.compat.v1.profiler.profile(
-                graph=graph, run_meta=run_meta, cmd='op', options=opts)
-            return flops.total_float_ops
+def get_flops(tf_model_path, config) -> float:
+    """
+    Calculate FLOPS [GFLOPs] for a tf.keras.Model or tf.keras.Sequential model
+    in inference mode. It uses tf.compat.v1.profiler under the hood.
+    """
+    # if not hasattr(model, "model"):
+    #     raise wandb.Error("self.model must be set before using this method.")
+    model = tf.keras.models.load_model(tf_model_path)
+    if not isinstance(
+        model, (tf.keras.models.Sequential, tf.keras.models.Model)
+    ):
+        raise ValueError(
+            "Calculating FLOPS is only supported for "
+            "`tf.keras.Model` and `tf.keras.Sequential` instances."
+        )
+
+    from tensorflow.python.framework.convert_to_constants import (
+        convert_variables_to_constants_v2_as_graph,
+    )
+
+    model_inputs = tf.ones([1, 1, *config.model.args.input_shape], tf.float32)
+    # Compute FLOPs for one sample
+    batch_size = 1
+    inputs = [
+        tf.TensorSpec([batch_size] + inp.shape[1:], inp.dtype)
+        for inp in model_inputs
+    ]
+
+    # convert tf.keras model into frozen graph to count FLOPs about operations used at inference
+    real_model = tf.function(model).get_concrete_function(inputs)
+    frozen_func, _ = convert_variables_to_constants_v2_as_graph(real_model)
+
+    # Calculate FLOPs with tf.profiler
+    run_meta = tf.compat.v1.RunMetadata()
+    opts = (
+        tf.compat.v1.profiler.ProfileOptionBuilder(
+            tf.compat.v1.profiler.ProfileOptionBuilder().float_operation()
+        )
+        .with_empty_output()
+        .build()
+    )
+
+    flops = tf.compat.v1.profiler.profile(
+        graph=frozen_func.graph, run_meta=run_meta, cmd="scope", options=opts
+    )
+
+    tf.compat.v1.reset_default_graph()
+
+    # convert to GFLOPs
+    return (flops.total_float_ops / 1e9) / 2
 
 
 def print_flops_n_train_tm(config, model, model_savepath, train_time):
@@ -28,7 +67,7 @@ def print_flops_n_train_tm(config, model, model_savepath, train_time):
     secs = train_time
 
     config.logger.info(f"Printing stats for model at {model_savepath}")
-    config.logger.info(f"\tTotal Flops : {get_flops(model_savepath)}")
+    config.logger.info(f"\tTotal Flops : {get_flops(model_savepath, config)} GFLOPs")
     config.logger.info(
         f"\tTraining Time: {day}:{hour}:{mins}:{secs} (d:h:m:s)")
     config.logger.info(f"\tTotal Parameters: {model.count_params()}")
