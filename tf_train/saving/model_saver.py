@@ -5,7 +5,7 @@ import tensorflow_model_optimization as tfmot
 from tf_train.pipelines import representative_data_gen as repr_data_gen
 
 
-def get_flops(tf_model_path, config) -> float:
+def get_flops(tf_model_path: str, config) -> float:
     """
     Calculate FLOPS [GFLOPs] for a tf.keras.Model or tf.keras.Sequential model
     in inference mode. It uses tf.compat.v1.profiler under the hood.

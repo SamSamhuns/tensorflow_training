@@ -7,10 +7,10 @@ from tqdm import tqdm
 import tensorflow as tf
 
 
-def validate_imgs(raw_data_path, corrupt_flist_txt, remove):
+def validate_imgs(raw_data_path: str, corrupt_flist_txt_path: str, remove: bool):
     dir_list = glob.glob(osp.join(raw_data_path, "*"))
     corrupt_file_count = 0
-    with open(corrupt_flist_txt, 'w') as fw:
+    with open(corrupt_flist_txt_path, 'w') as fw:
         for dir_path in tqdm(dir_list):
             img_list = glob.glob(osp.join(dir_path, "*"))
             for img_path in img_list:

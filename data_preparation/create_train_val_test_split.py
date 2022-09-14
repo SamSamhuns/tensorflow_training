@@ -53,7 +53,7 @@ def create_dir_and_copy_files(directory: str, fpath_list: List[str]) -> None:
         shutil.copy(file, directory)
 
 
-def write_fpaths_to_file(fpath_list, txt_path, mode='w'):
+def write_fpaths_to_file(fpath_list: List[str], txt_path: str, mode='w'):
     """
     Write fpaths in fpath_list to txt_path
     """
@@ -61,7 +61,7 @@ def write_fpaths_to_file(fpath_list, txt_path, mode='w'):
         [fp.write(path + '\n') for path in fpath_list]
 
 
-def split_train_test(source_img_dir, splitted_img_dir, val_split, test_split) -> None:
+def split_train_test(source_img_dir: str, splitted_img_dir: str, val_split: float, test_split: float) -> None:
     if (val_split + test_split) > 1:
         raise ValueError(
             f"val {val_split} + test {test_split} = {val_split + test_split} split cannot exceed 1.0")
