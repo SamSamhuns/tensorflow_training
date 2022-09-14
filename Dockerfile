@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:2.6.1-gpu
+FROM tensorflow/tensorflow:2.10.0-gpu
 
 # maintainer
 LABEL maintainer="fname.lname@domain.com"
