@@ -44,13 +44,13 @@ random.seed(42)
 # ###################################################################
 
 
-def create_dir_and_copy_files(dir: str, fpath_list: List[str]) -> None:
+def create_dir_and_copy_files(directory: str, fpath_list: List[str]) -> None:
     """dir: directory where files will be copied to
     fpath_list: list of file paths which will be copied to dir
     """
-    os.makedirs(dir, exist_ok=True)
+    os.makedirs(directory, exist_ok=True)
     for file in fpath_list:
-        shutil.copy(file, dir)
+        shutil.copy(file, directory)
 
 
 def write_fpaths_to_file(fpath_list, txt_path, mode='w'):

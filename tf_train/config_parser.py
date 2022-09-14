@@ -52,7 +52,6 @@ class ConfigParser:
             config["trainer"]["tf_image_logs"] = _ilog
 
         # make directory for saving checkpoints and log.
-        run_id == ''
         self.save_dir.mkdir(parents=True, exist_ok=True)
         self.log_dir.mkdir(parents=True, exist_ok=True)
 

@@ -16,8 +16,8 @@ def get_model(config):
         if main_model.trainable is False and config.model.args.include_top is False:
             config.logger.info(
                 "NOTE: model is missing top so cannot be used for classification.")
-    except Exception:
-        pass  # include_top might not be present
+    except Exception as e:
+        print(e)  # include_top might not be present
 
     # check if an additional final layer/model is used, i.e. for more dense prediction heads
     final_module = config.model.final_module

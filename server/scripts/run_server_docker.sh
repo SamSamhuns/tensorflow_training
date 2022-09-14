@@ -32,8 +32,8 @@ docker rm model_server_container || true
 echo "Docker Container starting with port exposed at port: $port on gpu: $gpu"
 docker run \
       --rm -d \
-      --gpus device=$gpunumber \
-      -p 0.0.0.0:$port:8080 \
+      --gpus device="$gpunumber" \
+      -p 0.0.0.0:"$port":8080 \
       --name model_server_container \
       --env LANG=en_US.UTF-8 \
       tf_model_server

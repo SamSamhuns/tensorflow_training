@@ -4,7 +4,7 @@ FROM nvcr.io/nvidia/tritonserver:22.08-py3
 LABEL maintainer="fname.lname@domain"
 
 # install opencv & python-venv reqs
-RUN apt-get update \
+RUN apt-get update --no-install-recommends\
  && apt-get install libsm6 libxext6 libgl1-mesa-glx python3-venv -y
 
 # set work directory

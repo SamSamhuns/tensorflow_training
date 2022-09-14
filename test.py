@@ -23,7 +23,7 @@ def get_class_name_list(mapping_file: str):
     """
     map_list = []
     with open(str(mapping_file), 'r') as fmap:
-        for i, line in enumerate(fmap):
+        for line in fmap:
             line = line.strip().split('\t')
             map_list.append(line[1])
     return sorted(map_list)

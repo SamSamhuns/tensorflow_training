@@ -29,4 +29,4 @@ echo "Building tf model server image and starting container"
 # cd to server dir and create docker file and run dockerfile to start server
 cd server
 bash scripts/build_server_docker.sh
-bash scripts/run_server_docker.sh -g $gpunumber -p $port
+bash scripts/run_server_docker.sh -g "$gpunumber" -p "$port"
