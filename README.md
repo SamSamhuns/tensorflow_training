@@ -1,5 +1,7 @@
 # TensorFlow Model Training
 
+[![Python 3.6](https://img.shields.io/badge/python-3.7-green.svg)](https://www.python.org/downloads/release/python-370/)[![Python 3.8](https://img.shields.io/badge/python-3.8-green.svg)](https://www.python.org/downloads/release/python-380/)[![Python 3.9](https://img.shields.io/badge/python-3.9-green.svg)](https://www.python.org/downloads/release/python-390/)
+
 Train TensorFlow models for image/video/features classification or other tasks. Currently the repository is set to train on image classification by default.
 
 ## Requirements
