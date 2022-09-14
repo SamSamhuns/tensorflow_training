@@ -148,7 +148,7 @@ class FullyConnectedNet(tf.keras.Model):
         else:
             reduce_in_features = num_initial_features
 
-        for i in range(num_blocks):
+        for _ in range(num_blocks):
             blocks.extend(self._create_block(reduce_in_features))
             reduce_in_features //= 2
 

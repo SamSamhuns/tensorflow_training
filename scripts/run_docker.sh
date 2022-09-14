@@ -29,9 +29,9 @@ docker rm tf_train_container || true
 
 docker run \
       -ti --rm \
-      -p 0.0.0.0:$port:6006 \
-      -v $PWD/checkpoints:/tensorflow_training/checkpoints \
-      -v $PWD/data:/tensorflow_training/data \
+      -p 0.0.0.0:"$port":6006 \
+      -v "$PWD"/checkpoints:/tensorflow_training/checkpoints \
+      -v "$PWD"/data:/tensorflow_training/data \
       --name tf_train_container \
       tensorflow_train \
       bash

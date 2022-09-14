@@ -13,7 +13,6 @@ from tf_train.utils import rgetattr
 def apply_quantization_to_layer(layer, quantize_layer_names):
     if (layer.name in quantize_layer_names):
         return tfmot.quantization.keras.quantize_annotate_layer(layer)
-    return layer
 
     # Quantize a type of layer
     if isinstance(layer, tf.keras.layers.Dense):

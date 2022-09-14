@@ -22,7 +22,7 @@ class Resnet50Places365Pred(tf.keras.Model):
         blocks = []
         units = init_units
         # add num_final_blocks-1 blocks before final block
-        for i in range(num_final_blocks - 1):
+        for _ in range(num_final_blocks - 1):
             dense = tf.keras.layers.Dense(
                 units,
                 activation='relu')
