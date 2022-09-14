@@ -51,7 +51,7 @@ def train(config: ConfigParser):
         config.logger.info("Training on CPU")
         mirrored_strategy = tf.distribute.MirroredStrategy(
             devices=["/cpu:0"])
-    # Convert and infer from pb file https://medium.com/@pipidog/how-to-convert-your-keras-models-to-tensorflow-e471400b886a
+
     with mirrored_strategy.scope():
 
         optimizer = config.init_ftn("optimizer", module_optim)()
