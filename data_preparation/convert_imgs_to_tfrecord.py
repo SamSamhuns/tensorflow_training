@@ -38,7 +38,7 @@ from dataset_utils import convert_dataset_to_tfr_single_proc, convert_dataset_to
 # ###################################################################
 
 
-def convert_to_tfrecord(img_dir_path, tfrecord_dir_path, cls_map_path, num_samples_per_shard, use_mult):
+def convert_to_tfrecord(img_dir_path: str, tfrecord_dir_path: str, cls_map_path: str, num_samples_per_shard: int, use_mult: bool):
     t0 = time.time()
     img_path_cid_list = get_img_to_cid_list(img_dir_path)
     random.shuffle(img_path_cid_list)

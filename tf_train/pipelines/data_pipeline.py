@@ -104,8 +104,13 @@ def _parse_val_fn(example_proto, config):
 def train_input_fn(config, bsize=None):
     tfr_parallel_read = config["data"]["tfrecord_parallel_read"]
     bsize = config["data"]["train_bsize"] if bsize is None else bsize
-    tfr_filenames = Path(config["data"]["train_data_dir"]).glob("*.tfrecord")
+    train_dir = config["data"]["train_data_dir"]
+    tfr_filenames = Path(train_dir).glob("*.tfrecord")
     tfr_filenames = list(map(str, tfr_filenames))
+    if not tfr_filenames:
+        raise ValueError(
+            f'No tfrecord files found in "{train_dir}".'
+            ' Ensure train dir is correctly specified in json config.')
 
     dataset = tf.data.TFRecordDataset(filenames=tfr_filenames,
                                       compression_type=None,
@@ -125,8 +130,13 @@ def train_input_fn(config, bsize=None):
 def val_input_fn(config, bsize=None):
     tfr_parallel_read = config["data"]["tfrecord_parallel_read"]
     bsize = config["data"]["val_bsize"] if bsize is None else bsize
-    tfr_filenames = Path(config["data"]["val_data_dir"]).glob("*.tfrecord")
+    val_dir = config["data"]["val_data_dir"]
+    tfr_filenames = Path(val_dir).glob("*.tfrecord")
     tfr_filenames = list(map(str, tfr_filenames))
+    if not tfr_filenames:
+        raise ValueError(
+            f'No tfrecord files found in "{val_dir}".'
+            ' Ensure val dir is correctly specified in json config.')
 
     dataset = tf.data.TFRecordDataset(filenames=tfr_filenames,
                                       compression_type=None,
