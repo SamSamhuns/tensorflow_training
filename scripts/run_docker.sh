@@ -1,4 +1,7 @@
 #!/bin/bash
+
+def_cont_name=tf_train_container
+
 helpFunction()
 {
    echo ""
@@ -22,16 +25,19 @@ then
    helpFunction
 fi
 
-echo "Stopping and removing docker container 'tf_train_container' if it is running on port $port"
-echo "Ignore No such container Error messages"
-docker stop tf_train_container || true
-docker rm tf_train_container || true
+# Check if the container is running
+if [ "$(docker ps -q -f name=$def_cont_name)" ]; then
+    # Stop the container
+    echo "Stopping docker container '$def_cont_name'"
+    docker stop "$def_cont_name"
+    echo "Stopped container '$def_cont_name'"
+fi
 
 docker run \
       -ti --rm \
       -p 0.0.0.0:"$port":6006 \
       -v "$PWD"/checkpoints:/tensorflow_training/checkpoints \
       -v "$PWD"/data:/tensorflow_training/data \
-      --name tf_train_container \
+      --name "$def_cont_name" \
       tensorflow_train \
       bash
