@@ -59,6 +59,14 @@ class ConfigParser:
         custom_env_vars = dotenv_values(".env")
         config["os_vars"] = custom_env_vars
 
+        # check if num_classes count matches number of classes in class_map_txt_path
+        n_cls = config["data"]["num_classes"]
+        class_map_txt = config["data"]["class_map_txt_path"]
+        assert Path(class_map_txt).exists(), f"{class_map_txt} does not exist"
+        with open(class_map_txt, 'r') as fptr:
+            n_fcls = len(fptr.readlines())
+            assert n_fcls == n_cls, f"num_classes {n_cls} and classes in {class_map_txt} {n_fcls} don't match"
+
         # count total training and validation samples if they are not explicitely provided
         num_train = config["data"]["num_train_samples"]
         if num_train:

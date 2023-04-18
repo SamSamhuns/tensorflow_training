@@ -33,7 +33,7 @@
     "class_map_txt_path": "data/dataset_classmap.txt",
     "tfrecord_parallel_read": 20,
     "shuffle": true,
-    "num_classes": 400,
+    "num_classes": 515,
     "num_train_samples": null,
     "num_val_samples": null
   },
@@ -41,7 +41,7 @@
     "type": "SGD",
     "args": {
       "learning_rate": 0.01,
-      "decay": 1e-6,
+      "weight_decay": 1e-6,
       "momentum": 0.9,
       "nesterov": false
     }
