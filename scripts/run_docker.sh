@@ -27,7 +27,6 @@ fi
 
 # Check if the container is running
 if [ "$(docker ps -q -f name=$def_cont_name)" ]; then
-    # Stop the container
     echo "Stopping docker container '$def_cont_name'"
     docker stop "$def_cont_name"
     echo "Stopped container '$def_cont_name'"
@@ -36,8 +35,9 @@ fi
 docker run \
       -ti --rm \
       -p 0.0.0.0:"$port":6006 \
-      -v "$PWD"/checkpoints:/tensorflow_training/checkpoints \
-      -v "$PWD"/data:/tensorflow_training/data \
+      --gpus '"device=0"' \
       --name "$def_cont_name" \
+      -v "$PWD"/checkpoints:/home/user1/tensorflow_training/checkpoints \
+      -v "$PWD"/data:/home/user1/tensorflow_training/data \
       tensorflow_train \
       bash

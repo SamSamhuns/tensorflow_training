@@ -6,7 +6,18 @@ Train TensorFlow models for image/video/features classification or other tasks. 
 
 ## Requirements
 
-Framework tested with python 3.8.x
+Install tensorflow and related cudnn libraries from the [tensorflow-official-documentation](https://www.tensorflow.org/install/pip#install_cuda_with_apt) if cudnn librarues are not setup.
+
+### Docker Setup (Recommended)
+
+Set up docker to run with [NVIDIA-container-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#setting-up-nvidia-container-toolkit) first.
+
+Create `checkpoints` dir in the current project directory.
+
+```shell
+bash scripts/build_docker.sh
+bash scripts/run_docker.sh -p TF_BOARD_PORT
+```
 
 ### Install requirements with `venv`:
 
@@ -164,7 +175,3 @@ Unit and integration testing with pytest
 ```shell
 python -m pytest tf_train  # from the top project directory
 ```
-
-## Docker
-
-Set up docker to run with NVIDIA first.

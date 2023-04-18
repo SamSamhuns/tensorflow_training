@@ -1,4 +1,6 @@
 #!/bin/bash
+
+def_cont_name=model_server_container
 helpFunction()
 {
    echo ""
@@ -24,16 +26,18 @@ then
    helpFunction
 fi
 
-echo "Stopping and removing docker container 'model_server_container' if it is running"
-echo "Ignore No such container Error messages"
-docker stop model_server_container || true
-docker rm model_server_container || true
+# Check if the container is running
+if [ "$(docker ps -q -f name=$def_cont_name)" ]; then
+    echo "Stopping docker container '$def_cont_name'"
+    docker stop "$def_cont_name"
+    echo "Stopped container '$def_cont_name'"
+fi
 
 echo "Docker Container starting with port exposed at port: $port on gpu: $gpu"
 docker run \
       --rm -d \
       --gpus device="$gpunumber" \
       -p 0.0.0.0:"$port":8080 \
-      --name model_server_container \
+      --name $def_cont_name \
       --env LANG=en_US.UTF-8 \
       tf_model_server
