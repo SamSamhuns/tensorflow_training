@@ -8,6 +8,21 @@ Train TensorFlow models for image/video/features classification or other tasks. 
 
 Install tensorflow and related cudnn libraries from the [tensorflow-official-documentation](https://www.tensorflow.org/install/pip#install_cuda_with_apt) if cudnn librarues are not setup.
 
+### Setup environment file
+
+Create a `.env` file with the following contents with the correct paths:
+
+    XLA_FLAGS="--xla_gpu_cuda_data_dir=/usr/local/cuda"
+    TF_XLA_FLAGS="--tf_xla_enable_xla_devices --tf_xla_auto_jit=2 --tf_xla_cpu_global_jit"
+    TF_CPP_MIN_LOG_LEVEL='3'
+    TF_FORCE_GPU_ALLOW_GROWTH="true"
+    OMP_NUM_THREADS="15"
+    KMP_BLOCKTIME="0"
+    KMP_SETTINGS="1"
+    KMP_AFFINITY="granularity=fine,verbose,compact,1,0"
+    CUDA_DEVICE_ORDER="PCI_BUS_ID"
+    CUDA_VISIBLE_DEVICES="0"
+
 ### Docker Setup (Recommended)
 
 Set up docker to run with [NVIDIA-container-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#setting-up-nvidia-container-toolkit) first.
