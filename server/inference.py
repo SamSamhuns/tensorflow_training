@@ -59,7 +59,7 @@ def run_inference(
 
     if FLAGS.result_save_dir is not None:
         FLAGS.result_save_dir = os.path.join(
-            FLAGS.save_result_dir, f"{FLAGS.model_name}")
+            FLAGS.result_save_dir, f"{FLAGS.model_name}")
         os.makedirs(FLAGS.result_save_dir, exist_ok=True)
     if FLAGS.debug:
         print(f"Running model {FLAGS.model_name}")
@@ -69,8 +69,9 @@ def run_inference(
         raise Exception("Model could not be loaded in the server")
     triton_client, model_metadata, model_config = model_info
 
+    # parse_model_grpc returns max_batch_size, input_name, output_name, h, w, c, format, dtype 
     # input_name, output_name, format, dtype are all lists
-    max_batch_size, input_name, output_name, h, w, c, format, dtype = parse_model_grpc(
+    max_batch_size, input_name, output_name, h, w, _, _, dtype = parse_model_grpc(
         model_metadata, model_config.config)
 
     # check for dynamic input shapes

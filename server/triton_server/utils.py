@@ -45,22 +45,22 @@ def get_client_and_model_metadata_config(FLAGS):
     try:
         triton_client = grpcclient.InferenceServerClient(
             url=FLAGS.url, verbose=FLAGS.verbose)
-    except Exception as e:
-        print("client creation failed: " + str(e))
+    except Exception as excep:
+        print("client creation failed: " + str(excep))
         return -1
 
     try:
         model_metadata = triton_client.get_model_metadata(
             model_name=FLAGS.model_name, model_version=FLAGS.model_version)
-    except InferenceServerException as e:
-        print("failed to retrieve the metadata: " + str(e))
+    except InferenceServerException as excep:
+        print("failed to retrieve the metadata: " + str(excep))
         return -1
 
     try:
         model_config = triton_client.get_model_config(
             model_name=FLAGS.model_name, model_version=FLAGS.model_version)
-    except InferenceServerException as e:
-        print("failed to retrieve the config: " + str(e))
+    except InferenceServerException as excep:
+        print("failed to retrieve the config: " + str(excep))
         return -1
 
     return triton_client, model_metadata, model_config
@@ -96,11 +96,11 @@ def parse_model_grpc(model_metadata, model_config):
     for i in range(len(model_metadata.outputs)):
         output_metadata_name_list.append(model_metadata.outputs[i].name)
     # the first input must always be the image array
-    s1 = model_metadata.inputs[0].shape[1]
-    s2 = model_metadata.inputs[0].shape[2]
-    s3 = model_metadata.inputs[0].shape[3]
+    s_1 = model_metadata.inputs[0].shape[1]
+    s_2 = model_metadata.inputs[0].shape[2]
+    s_3 = model_metadata.inputs[0].shape[3]
     return (model_config.max_batch_size, input_metadata_name_list,
-            output_metadata_name_list, s1, s2, s3, input_format_list,
+            output_metadata_name_list, s_1, s_2, s_3, input_format_list,
             input_datatype_list)
 
 
@@ -122,9 +122,9 @@ def extract_data_from_media(FLAGS, preprocess_func, media_filenames):
                 if FLAGS.result_save_dir is not None:
                     all_req_imgs_orig.append(img)
                 fps = 1
-            except Exception as e:
+            except Exception as excep:
                 traceback.print_exc()
-                print(f"{e}. Failed to process image {filename}")
+                print(f"{excep}. Failed to process image {filename}")
         elif FLAGS.inference_mode == "video":
             try:
                 cap = cv2.VideoCapture(filename)
@@ -155,9 +155,9 @@ def extract_data_from_media(FLAGS, preprocess_func, media_filenames):
                 all_req_imgs_orig_size = np.array(
                     [len(image_data), *orig_shape])
                 cap.release()
-            except Exception as e:
+            except Exception as excep:
                 traceback.print_exc()
-                print(f"{e}. Failed to process video {filename}")
+                print(f"{excep}. Failed to process video {filename}")
     return image_data, all_req_imgs_orig, all_req_imgs_orig_size
 
 
@@ -197,15 +197,15 @@ def get_inference_responses(image_data_list, FLAGS, trt_inf_data):
                     input_image_data, input_name, output_name, input_dtype, FLAGS):
                 sent_count += 1
                 responses.append(
-                    triton_client.infer(FLAGS.model_name,
+                    triton_client.infer(model_name,
                                         inputs,
                                         request_id=str(sent_count),
-                                        model_version=FLAGS.model_version,
+                                        model_version=model_version,
                                         outputs=outputs))
 
-        except InferenceServerException as e:
+        except InferenceServerException as excep:
             traceback.print_exc()
-            print("inference failed: " + str(e))
+            print("inference failed: " + str(excep))
             return -1
 
     return responses

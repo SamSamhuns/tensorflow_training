@@ -62,10 +62,10 @@ async def cache_file_locally(file_cache_path: str, data: bytes) -> None:
 
 class InferenceProcessTask():
     def __init__(self, func, input_data):
-        super(InferenceProcessTask, self).__init__()
+        super().__init__()
         self.func = func
         self.input_data = input_data
-        self.response_data = dict()
+        self.response_data = {}
 
     def run(self):
         # run the inference function
@@ -85,7 +85,7 @@ async def inference_file(input_model: ModelName,
                          background_tasks: BackgroundTasks,
                          file: UploadFile = File(...),
                          threshold: float = Form(0.30)):
-    response_data = dict()
+    response_data = {}
     try:
         file_name = str(uuid.uuid4()) + get_mode_ext(inference_mode.value)
         file_bytes_content = file.file.read()
@@ -104,8 +104,8 @@ async def inference_file(input_model: ModelName,
             input_data=input_data)
         task.run()
         response_data = task.response_data
-    except Exception as e:
-        print(e)
+    except Exception as excep:
+        print(excep)
         print(traceback.print_exc())
         response_data["code"] = "failed"
         response_data["msg"] = f"failed to run inference on uploaded {inference_mode.value}"
@@ -119,7 +119,7 @@ async def inference_url(input_model: ModelName,
                         background_tasks: BackgroundTasks,
                         url: str = Form(""),
                         threshold: float = Form(0.30)):
-    response_data = dict()
+    response_data = {}
     os.makedirs(ROOT_DOWNLOAD_URL, exist_ok=True)
     file_name = str(uuid.uuid4()) + get_mode_ext(inference_mode.value)
     file_cache_path = os.path.join(ROOT_DOWNLOAD_URL, file_name)
@@ -128,8 +128,8 @@ async def inference_url(input_model: ModelName,
     try:
         download_url_file(url, file_cache_path)
         background_tasks.add_task(remove_file, file_cache_path)
-    except Exception as e:
-        print(e, traceback.print_exc())
+    except Exception as excep:
+        print(excep, traceback.print_exc())
         response_data["code"] = "failed"
         response_data['msg'] = f"couldn't download {inference_mode.value} from \'{url}\'. Not a valid link."
         return response_data
@@ -145,8 +145,8 @@ async def inference_url(input_model: ModelName,
             input_data=input_data)
         task.run()
         response_data = task.response_data
-    except Exception as e:
-        print(e, traceback.print_exc())
+    except Exception as excep:
+        print(excep, traceback.print_exc())
         response_data["code"] = "failed"
         response_data["msg"] = f"failed to run inference on {inference_mode} from {url}"
 
@@ -161,7 +161,7 @@ def index():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         """Start FastAPI with uvicorn server hosting inference models""")
-    parser.add_argument('-ip', '--host_ip', type=str, default="0.0.0.0",
+    parser.add_argument('-ip', '--host_ip', type=str, default="127.0.0.1",
                         help='host ip address. (default: %(default)s)')
     parser.add_argument('-p', '--port', type=int, default=8080,
                         help='uvicorn port number. (default: %(default)s)')

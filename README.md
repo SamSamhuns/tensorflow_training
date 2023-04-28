@@ -12,16 +12,18 @@ Install tensorflow and related cudnn libraries from the [tensorflow-official-doc
 
 Create a `.env` file with the following contents with the correct paths:
 
-    XLA_FLAGS="--xla_gpu_cuda_data_dir=/usr/local/cuda"
-    TF_XLA_FLAGS="--tf_xla_enable_xla_devices --tf_xla_auto_jit=2 --tf_xla_cpu_global_jit"
-    TF_CPP_MIN_LOG_LEVEL='3'
-    TF_FORCE_GPU_ALLOW_GROWTH="true"
-    OMP_NUM_THREADS="15"
-    KMP_BLOCKTIME="0"
-    KMP_SETTINGS="1"
-    KMP_AFFINITY="granularity=fine,verbose,compact,1,0"
-    CUDA_DEVICE_ORDER="PCI_BUS_ID"
-    CUDA_VISIBLE_DEVICES="0"
+```yaml
+XLA_FLAGS="--xla_gpu_cuda_data_dir=/usr/local/cuda"
+TF_XLA_FLAGS="--tf_xla_enable_xla_devices --tf_xla_auto_jit=2 --tf_xla_cpu_global_jit"
+TF_CPP_MIN_LOG_LEVEL='3'
+TF_FORCE_GPU_ALLOW_GROWTH="true"
+OMP_NUM_THREADS="15"
+KMP_BLOCKTIME="0"
+KMP_SETTINGS="1"
+KMP_AFFINITY="granularity=fine,verbose,compact,1,0"
+CUDA_DEVICE_ORDER="PCI_BUS_ID"
+CUDA_VISIBLE_DEVICES="0"
+```
 
 ### Docker Setup (Recommended)
 
@@ -34,7 +36,7 @@ bash scripts/build_docker.sh
 bash scripts/run_docker.sh -p TF_BOARD_PORT
 ```
 
-### Install requirements with `venv`:
+### Install requirements with `venv`
 
 ```shell
 python -m venv venv
@@ -56,7 +58,7 @@ export PATH="$PATH:/usr/local/cuda/bin"
 
 The environment variable `XLA_FLAGS="--xla_gpu_cuda_data_dir=/usr/local/cuda` must also be set to the cuda directory in the `.env` file.
 
-### Or, Install requirements with `conda`:
+### Or, Install requirements with `conda`
 
 ```shell
 conda create --name tf_gpu tensorflow-gpu python=3.8 -y
