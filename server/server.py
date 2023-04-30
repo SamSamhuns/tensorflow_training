@@ -161,7 +161,7 @@ def index():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         """Start FastAPI with uvicorn server hosting inference models""")
-    parser.add_argument('-ip', '--host_ip', type=str, default="127.0.0.1",
+    parser.add_argument('-ip', '--host_ip', type=str, default="0.0.0.0",
                         help='host ip address. (default: %(default)s)')
     parser.add_argument('-p', '--port', type=int, default=8080,
                         help='uvicorn port number. (default: %(default)s)')
