@@ -29,6 +29,7 @@ fi
 if [ "$(docker ps -q -f name=$def_cont_name)" ]; then
     echo "Stopping docker container '$def_cont_name'"
     docker stop "$def_cont_name"
+    docker rm "$def_cont_name"
     echo "Stopped container '$def_cont_name'"
 fi
 # create shr vol dires with correct perms
@@ -36,7 +37,7 @@ mkdir -p "$PWD"/checkpoints
 mkdir -p "$PWD"/data
 docker run \
       -ti --rm \
-      -p 127.0.0.1:"$port":6006 \
+      -p 0.0.0.0:"$port":6006 \
       --gpus '"device=0"' \
       --name "$def_cont_name" \
       -v "$PWD"/checkpoints:/home/user1/tensorflow_training/checkpoints \

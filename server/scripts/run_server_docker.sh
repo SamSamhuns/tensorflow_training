@@ -37,7 +37,7 @@ echo "Docker Container starting with port exposed at port: $port on gpu: $gpu"
 docker run \
       --rm -d \
       --gpus device="$gpunumber" \
-      -p 127.0.0.1:"$port":8080 \
+      -p 0.0.0.0:"$port":8080 \
       --name $def_cont_name \
       --env LANG=en_US.UTF-8 \
       tf_model_server
