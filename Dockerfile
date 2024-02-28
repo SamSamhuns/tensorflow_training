@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:2.12.0-gpu
+FROM tensorflow/tensorflow:2.15.0-gpu
 
 # maintainer
 LABEL maintainer="fname.lname@domain.com"
@@ -23,7 +23,7 @@ RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # install python dependencies
-RUN pip install pip==23.1.2
+RUN pip install pip==24.0
 COPY ./requirements.txt .
 RUN pip install --no-cache-dir --default-timeout=100 -r requirements.txt
 
