@@ -72,7 +72,7 @@ def train(config: ConfigParser):
             elif cb_obj_name == "ckpt_callback":
                 callback = config.init_obj(
                     ["callbacks", cb_obj_name], tf.keras.callbacks,
-                    filepath=config.save_dir / config["trainer"]["ckpt_fmt"])
+                    filepath=str(config.save_dir / config["trainer"]["ckpt_fmt"]))
             elif cb_obj_name == "epoch_log_lambda_callback":
                 log_file = open(config.log_dir / "info.log",
                                 mode='a', buffering=1)
