@@ -1,6 +1,7 @@
 # TensorFlow Model Training
 
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/74a038f3ead74de6916808b353a34268)](https://www.codacy.com/gh/SamSamhuns/tensorflow_training/dashboard?utm_source=github.com&utm_medium=referral&utm_content=SamSamhuns/tensorflow_training&utm_campaign=Badge_Grade)[![Python 3.6](https://img.shields.io/badge/python-3.7-green.svg)](https://www.python.org/downloads/release/python-370/)[![Python 3.8](https://img.shields.io/badge/python-3.8-green.svg)](https://www.python.org/downloads/release/python-380/)[![Python 3.9](https://img.shields.io/badge/python-3.9-green.svg)](https://www.python.org/downloads/release/python-390/)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/74a038f3ead74de6916808b353a34268)](https://www.codacy.com/gh/SamSamhuns/tensorflow_training/dashboard?utm_source=github.com&utm_medium=referral&utm_content=SamSamhuns/tensorflow_training&utm_campaign=Badge_Grade)[![Python 3.8](https://img.shields.io/badge/python-3.8-green.svg)](https://www.python.org/downloads/release/python-380/)[![Python 3.9](https://img.shields.io/badge/python-3.9-green.svg)](https://www.python.org/downloads/release/python-390/)[![Python 3.10](https://img.shields.io/badge/python-3.10-green.svg)](https://www.python.org/downloads/release/python-3100/)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-green.svg)](https://www.python.org/downloads/release/python-3110/)
 
 Train TensorFlow models for image/video/features classification or other tasks. Currently the repository is set to train on image classification by default.
 
@@ -61,7 +62,7 @@ The environment variable `XLA_FLAGS="--xla_gpu_cuda_data_dir=/usr/local/cuda` mu
 ### Or, Install requirements with `conda`
 
 ```shell
-conda create --name tf_gpu tensorflow-gpu python=3.8 -y
+conda create --name tf_gpu tensorflow-gpu python=3.9 -y
 conda activate tf_gpu
 while read requirement; do conda install --yes $requirement; done < requirements.txt
 ```
@@ -128,9 +129,9 @@ Note: The test split should not be converted into tfrecords and the original `da
 
 ```shell
 # convert train files into train tfrecord, select NUM_SHARDS so that each shard has a size of 100 MB+
-python data_preparation/convert_imgs_to_tfrecord.py --sd data/split_dataset/train --td data/tfrecord_dataset/train --cp CLASS_MAP_TXT_PATH --ns NUM_SAMPLES_PER_SHARDS
+python data_preparation/convert_imgs_to_tfrecord.py --sd data/split_dataset/train --td data/tfrecord_dataset/train --cp CLASS_MAP_TXT_SAVEPATH --ns NUM_SAMPLES_PER_SHARDS
 # convert val files into val tfrecord, select NUM_SHARDS so that each shard has a size of 100 MB+
-python data_preparation/convert_imgs_to_tfrecord.py --sd data/split_dataset/val --td data/tfrecord_dataset/val --cp CLASS_MAP_TXT_PATH --ns NUM_SAMPLES_PER_SHARDS
+python data_preparation/convert_imgs_to_tfrecord.py --sd data/split_dataset/val --td data/tfrecord_dataset/val --cp CLASS_MAP_TXT_SAVEPATH --ns NUM_SAMPLES_PER_SHARDS
 # to use multiprocessing use the --mt flag
 ```
 
