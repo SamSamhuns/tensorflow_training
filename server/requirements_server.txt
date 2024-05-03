@@ -1,8 +1,8 @@
-aiofiles==23.1.0
-fastapi==0.95.1
-opencv-python==4.7.0.72
-Pillow==9.5.0
-python-multipart==0.0.6
+aiofiles==23.2.1
+fastapi==0.111.0
+opencv-python==4.9.0.80
+pillow==10.3.0
+python-multipart==0.0.9
 requests==2.31.0
-tritonclient[grpc]==2.32.0
-uvicorn==0.21.1
+tritonclient[grpc]==2.45.0
+uvicorn==0.29.0

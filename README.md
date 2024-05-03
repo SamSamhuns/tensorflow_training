@@ -5,13 +5,33 @@
 
 Train TensorFlow models for image/video/features classification or other tasks. Currently the repository is set to train on image classification by default.
 
+- [TensorFlow Model Training](#tensorflow-model-training)
+  - [Requirements](#requirements)
+    - [Setup environment file](#setup-environment-file)
+    - [Docker Setup (Recommended)](#docker-setup-recommended)
+    - [Install requirements with `venv`](#install-requirements-with-venv)
+      - [Using GPU](#using-gpu)
+    - [Or, Install requirements with `conda`](#or-install-requirements-with-conda)
+  - [Data Preparation](#data-preparation)
+    - [OPTIONAL: Data Duplication and Cleaning](#optional-data-duplication-and-cleaning)
+    - [OPTIONAL: Train-Val-Test Splitting](#optional-train-val-test-splitting)
+    - [Convert Data to tfrecords for faster training](#convert-data-to-tfrecords-for-faster-training)
+    - [OPTIONAL: Video Frame Extraction](#optional-video-frame-extraction)
+  - [Selecting model, data paths and model hyper-parameters](#selecting-model-data-paths-and-model-hyper-parameters)
+    - [Set environment variables](#set-environment-variables)
+  - [Model training](#model-training)
+    - [Track training with tensorBoard](#track-training-with-tensorboard)
+  - [Model testing](#model-testing)
+  - [TODO: Model webserver](#todo-model-webserver)
+  - [For Developers](#for-developers)
+
 ## Requirements
 
 Install tensorflow and related cudnn libraries from the [tensorflow-official-documentation](https://www.tensorflow.org/install/pip#install_cuda_with_apt) if cudnn librarues are not setup.
 
 ### Setup environment file
 
-Create a `.env` file with the following contents with the correct paths:
+Create a `.env` file with the following contents with the correct paths ensuring the correct CUDA install path:
 
 ```yaml
 XLA_FLAGS="--xla_gpu_cuda_data_dir=/usr/local/cuda"
@@ -45,12 +65,11 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-**Note:** When using a python `venv`, the cuda libraries must be present in the current path.
+#### Using GPU
 
-Assuming cuda was installed to `usr/local/cuda`, the `LD_LIBRARY_PATH` variable should be set to `/usr/local/cuda/lib64` and the `/usr/local/cuda/bin` must be added to the `$PATH` variable as well in the current shell source file.
+When using a python `venv`, CUDA libraries must be present in the current path. If CUDA was installed to `usr/local/cuda`, the following commands should be added to the current shell source file (`~/.bash_profile` or `~/.bashrc`).
 
 ```shell
-# if cuda was installed to usr/local/cuda
 # Set cuda LD_LIBRARY_PATH
 export LD_LIBRARY_PATH="/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
 # add cuda bin dir to path
@@ -71,7 +90,7 @@ Note: `Conda` sets the `cuda`, `cudnn` and `cudatoolkit` automatically, download
 
 ## Data Preparation
 
-Assuming the data directory must be organized according to the following structure, with sub-directories having class names containing images.
+Assuming the data directory must be organized according to the following structure, with sub-directories having class names containing images. THe CIFAR-10 dataset in JPG fomrat can be acquired from <https://github.com/YoongiKim/CIFAR-10-images> for a sample train and test.
 
 i.e.
 
@@ -103,7 +122,7 @@ i.e.
                             |_ ...
                    |_ ...
 
-### Data Duplication and Cleaning
+### OPTIONAL: Data Duplication and Cleaning
 
 If all the classes do not have equal number of training samples, data Duplication can be done.
 
@@ -113,12 +132,12 @@ python data_preparation/duplicate_data.py --sd data/src_dataset --td data/duplic
 python data_preparation/find_corrupt_imgs.py --rd data/src_dataset
 ```
 
-### Train-Val-Test Splitting
+### OPTIONAL: Train-Val-Test Splitting
 
 Set validation and test split in fractions (i.e. 0.1). Both splits are optional.
 
 ```shell
-python data_preparation/create_train_val_test_split.py --sd data/duplicated_dataset --td data/split_dataset --vs VAL_SPLIT --ts TEST_SPLIT
+python data_preparation/create_train_val_test_split.py --sd data/duplicated_dataset --td data/split_dataset[ --vs VAL_SPLIT] [--ts TEST_SPLIT]
 # to check the number of images in train, val and test dirs
 bash scripts/count_files_per_subdir.sh data/split_dataset
 ```
@@ -129,9 +148,9 @@ Note: The test split should not be converted into tfrecords and the original `da
 
 ```shell
 # convert train files into train tfrecord, select NUM_SHARDS so that each shard has a size of 100 MB+
-python data_preparation/convert_imgs_to_tfrecord.py --sd data/split_dataset/train --td data/tfrecord_dataset/train --cp CLASS_MAP_TXT_SAVEPATH --ns NUM_SAMPLES_PER_SHARDS
+python data_preparation/convert_imgs_to_tfrecord.py --sd data/split_dataset/train --td data/tfrecord_dataset/train [--cp CLASS_MAP_TXT_SAVEPATH] [--ns NUM_SAMPLES_PER_SHARDS]
 # convert val files into val tfrecord, select NUM_SHARDS so that each shard has a size of 100 MB+
-python data_preparation/convert_imgs_to_tfrecord.py --sd data/split_dataset/val --td data/tfrecord_dataset/val --cp CLASS_MAP_TXT_SAVEPATH --ns NUM_SAMPLES_PER_SHARDS
+python data_preparation/convert_imgs_to_tfrecord.py --sd data/split_dataset/val --td data/tfrecord_dataset/val [--cp CLASS_MAP_TXT_SAVEPATH] [--ns NUM_SAMPLES_PER_SHARDS]
 # to use multiprocessing use the --mt flag
 ```
 
@@ -156,7 +175,7 @@ The model information repository is located at `tf_train/model/models_info.py`. 
 
 Set number of GPUs to use, Tensorflow, and other system environment variables in `.env`.
 
-## Model Training
+## Model training
 
 ```shell
 python train.py --cfg CONFIG_JSON_PATH [-r RESUME_CHECKPOINT_PATH]
@@ -170,14 +189,13 @@ Notes:
 -   When using mixed_float16 precision, the dtypes of the final dense and activation layers must be set to `float32`.
 -   An error like: `ValueError: Unexpected result of train_function (Empty logs)` could be caused by incorrect paths to train and validation directories in the config.json files
 
-
-### Training Tracking with TensorBoard
+### Track training with tensorBoard
 
 ```shell
 tensorboard --logdir=checkpoints/tf_logs/ --port=PORT_NUM
 ```
 
-## Model Testing
+## Model testing
 
 Make sure to set the correct `test_data_dir` under `data` and the `class_map_txt_path` under `tester` in the json config file.
 The class_map_txt_path file is generated by the `convert_imgs_to_tfrecord.py` script when converting images to tfrecord format.
@@ -185,6 +203,10 @@ The class_map_txt_path file is generated by the `convert_imgs_to_tfrecord.py` sc
 ```shell
 python test.py --cfg CONFIG_JSON_PATH -r TEST_CHECKPOINT_PATH
 ```
+
+## TODO: Model webserver
+
+We can use a dockerized uvicorn and fastapi webserver with triton-server to serve the model through a HTTPS API endpoint. Instructions are at [tensorflow_training/server/README.md](server/README.md).
 
 ## For Developers
 
