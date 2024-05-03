@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/tritonserver:22.08-py3
+FROM nvcr.io/nvidia/tritonserver:24.04-py3
 
 # Maintainer
 LABEL maintainer="fname.lname@domain"
@@ -27,7 +27,7 @@ RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # install python dependencies
-RUN pip install pip==23.1.2
+RUN pip install pip==24.0
 COPY ./requirements_server.txt "$WORKDIR/app/requirements_server.txt"
 RUN pip install --no-cache-dir --default-timeout=100 -r "$WORKDIR/app/requirements_server.txt"
 
