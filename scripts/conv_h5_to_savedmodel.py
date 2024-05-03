@@ -28,7 +28,7 @@ def create_custom_module(model, model_info):
     return CustomModule(model)
 
 
-def convert_h5_to_savedmodel(config_path, h5_model_path, savedmodel_export_dir):
+def convert_h5_to_savedmodel(config_path: str, h5_model_path: str, savedmodel_export_dir: str):
     os.makedirs(savedmodel_export_dir, exist_ok=True)
 
     config = read_json(config_path)
@@ -48,19 +48,15 @@ def convert_h5_to_savedmodel(config_path, h5_model_path, savedmodel_export_dir):
 
 
 def main():
-    parser = argparse.ArgumentParser("""
-        Convert img dataset into npz files with embedded class label info:
-        eg. python _2_convert_dataset_to_npz -id data/split_bird_dataset/train
-                                             -td data/tfrecord_bird_dataset/train
-                                             -ns 100""")
+    parser = argparse.ArgumentParser("""Export h5 model into savedmodel format""")
     parser.add_argument('-cfg', '--config', required=True, type=str,
                         help='config file path (default: %(default)s)')
     parser.add_argument('-h5', '--h5_model_path',
                         type=str, required=True,
-                        help="path to h5 model for conversion")
+                        help="source h5 model path for conversion")
     parser.add_argument('-e', '--savedmodel_export_dir',
                         type=str, default="checkpoints/1/model.savedmodel",
-                        help="Dir path where the savedmodel will be exported to. (default %(default)s)")
+                        help="savedmodel export dir path. (default %(default)s)")
     args = parser.parse_args()
     convert_h5_to_savedmodel(args.config,
                              args.h5_model_path,
