@@ -1,3 +1,4 @@
+import os
 import logging
 import logging.config
 from pathlib import Path
@@ -14,7 +15,7 @@ def setup_logging_config(save_dir, log_config='tf_train/logging/logger_config.js
         # modify logging paths based on run config
         for _, handler in config['handlers'].items():
             if 'filename' in handler:
-                handler['filename'] = str(save_dir / handler['filename'])
+                handler['filename'] = os.path.join(save_dir, handler['filename'])
 
         logging.config.dictConfig(config)
     else:
