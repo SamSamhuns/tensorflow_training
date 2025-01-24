@@ -5,7 +5,7 @@ import traceback
 import tensorflow as tf
 from easydict import EasyDict as edict
 
-from tf_train.utils.common_utils import read_json
+from tf_train.utils.common import read_json
 from tf_train.model.models_info import model_info_dict
 
 
