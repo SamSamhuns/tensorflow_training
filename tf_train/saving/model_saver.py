@@ -1,3 +1,4 @@
+import os.path as osp
 from functools import partial
 
 import tensorflow as tf
@@ -89,7 +90,7 @@ def save_model(model, train_time, config):
     if (during_train_qnt or qtn_layers):
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
         model1 = converter.convert()
-        with open(config.save_dir / "qa.tflite", "wb") as f:
+        with open(osp.join(config.save_dir, "qa.tflite"), "wb") as f:
             f.write(model1)
         retrain_path /= "qa_retrain_model"
         infer_path /= "qa_infer_model"
@@ -108,7 +109,7 @@ def save_model(model, train_time, config):
             tf.lite.OpsSet.EXPERIMENTAL_TFLITE_BUILTINS_ACTIVATIONS_INT16_WEIGHTS_INT8,
             tf.lite.OpsSet.TFLITE_BUILTINS]
         model1 = converter.convert()
-        with open(config.save_dir / "ptq.tflite", "wb") as f:
+        with open(osp.join(config.save_dir, "ptq.tflite"), "wb") as f:
             f.write(model1)
     elif use_clustering or cluster_layers:
         retrain_path /= "cluster_retrain_model"
@@ -120,7 +121,7 @@ def save_model(model, train_time, config):
 
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
         model1 = converter.convert()
-        with open(config.save_dir / "cluster.tflite", "wb") as f:
+        with open(osp.join(config.save_dir, "cluster.tflite"), "wb") as f:
             f.write(model1)
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
         converter.representative_dataset = partial(
@@ -132,7 +133,7 @@ def save_model(model, train_time, config):
             tf.lite.OpsSet.EXPERIMENTAL_TFLITE_BUILTINS_ACTIVATIONS_INT16_WEIGHTS_INT8,
             tf.lite.OpsSet.TFLITE_BUILTINS]
         model1 = converter.convert()
-        with open(config.save_dir / "cluster_ptq.tflite", "wb") as f:
+        with open(osp.join(config.save_dir, "cluster_ptq.tflite"), "wb") as f:
             f.write(model1)
     elif prune_layers:
         retrain_path /= "prune_retrain_model"
@@ -144,7 +145,7 @@ def save_model(model, train_time, config):
 
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
         model1 = converter.convert()
-        with open(config.save_dir / "prune.tflite", "wb") as f:
+        with open(osp.join(config.save_dir, "prune.tflite"), "wb") as f:
             f.write(model1)
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
         converter.representative_dataset = partial(
@@ -156,11 +157,11 @@ def save_model(model, train_time, config):
             tf.lite.OpsSet.EXPERIMENTAL_TFLITE_BUILTINS_ACTIVATIONS_INT16_WEIGHTS_INT8,
             tf.lite.OpsSet.TFLITE_BUILTINS]
         model1 = converter.convert()
-        with open(config.save_dir / "prune_ptq.tflite", "wb") as f:
+        with open(osp.join(config.save_dir, "prune_ptq.tflite"), "wb") as f:
             f.write(model1)
     else:
-        infer_path /= "infer_model"
-        retrain_path /= "retrain_model"
+        infer_path = osp.join(infer_path, "infer_model")
+        retrain_path = osp.join(retrain_path, "retrain_model")
         tf.keras.models.save_model(model, retrain_path, include_optimizer=True)
         tf.keras.models.save_model(model, infer_path, include_optimizer=False)
         print_flops_n_train_tm(config, model, infer_path, train_time)
