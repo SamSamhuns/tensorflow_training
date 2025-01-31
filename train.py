@@ -1,28 +1,25 @@
-# set env ars from .env before importing any python libraries
 from dotenv import load_dotenv
 load_dotenv(".env")
-
-import io
-import math
-import argparse
-import collections
-from datetime import datetime
-from functools import partial
-from contextlib import redirect_stdout
-
-import tensorflow as tf
+# set env vars from .env before importing any python libraries
 import tensorflow_model_optimization as tfmot
-
+import tensorflow as tf
+from omegaconf import OmegaConf
+from contextlib import redirect_stdout
+from functools import partial
+from datetime import datetime
+import argparse
+import math
+import io
+import os
+from tf_train.pipelines import train_input_fn, val_input_fn
+from tf_train.model_optimization import optimize_model
+from tf_train.config_parser import ConfigParser
+from tf_train.saving import save_model
+from tf_train.model import get_model
+import tf_train.optimizer as module_optim
+import tf_train.metric as module_metric
 import tf_train.loss as module_loss
 import tf_train.logging as module_log
-import tf_train.metric as module_metric
-import tf_train.optimizer as module_optim
-from tf_train.model import get_model
-from tf_train.utils import write_json
-from tf_train.saving import save_model
-from tf_train.config_parser import ConfigParser
-from tf_train.model_optimization import optimize_model
-from tf_train.pipelines import train_input_fn, val_input_fn
 
 
 def train(config: ConfigParser):
@@ -38,7 +35,7 @@ def train(config: ConfigParser):
     tf.config.optimizer.set_jit(False)
     # tf.config.experimental.enable_mlir_graph_optimization()  # gives a channel depth error
 
-    ngpu_avai = len(tf.config.list_physical_devices('GPU'))
+    ngpu_avai = len(tf.config.list_physical_devices("GPU"))
     config.logger.info(
         f"Available devices: {[x.name for x in tf.config.list_physical_devices()]}")
     config.logger.info(f"Num GPUs used: {ngpu_avai}")
@@ -55,7 +52,7 @@ def train(config: ConfigParser):
     with mirrored_strategy.scope():
 
         optimizer = config.init_ftn("optimizer", module_optim)()
-        loss_weights = config["loss_weights"]
+        loss_weights = list(config["loss_weights"])
         loss = [config.init_ftn(["loss", _loss], module_loss, from_logits=config.model.gives_logits)()
                 for _loss in config["loss"]]
         metrics = [config.init_ftn(["train_metrics", _metric], module_metric)()
@@ -72,10 +69,9 @@ def train(config: ConfigParser):
             elif cb_obj_name == "ckpt_callback":
                 callback = config.init_obj(
                     ["callbacks", cb_obj_name], tf.keras.callbacks,
-                    filepath=str(config.save_dir / config["trainer"]["ckpt_fmt"]))
+                    filepath=os.path.join(config.save_dir, config["trainer"]["ckpt_fmt"]))
             elif cb_obj_name == "epoch_log_lambda_callback":
-                log_file = open(config.log_dir / "info.log",
-                                mode='a', buffering=1)
+                log_file = open(os.path.join(config.log_dir, "info.log"), mode="a", buffering=1, encoding="utf-8")
                 callback = config.init_obj(
                     ["callbacks", cb_obj_name], tf.keras.callbacks,
                     on_epoch_end=lambda epoch, logs: log_file.write(
@@ -84,8 +80,11 @@ def train(config: ConfigParser):
                     on_train_end=lambda logs: log_file.close())
             elif cb_obj_name == "update_initial_epoch_callback":
                 def _update_initial_epoch(epoch):
-                    config["trainer"]["initial_epoch"] = epoch
-                    write_json(config._config, config.save_dir / 'config.json')
+                    config.trainer.initial_epoch = epoch
+                    cfg = dict(config.config)
+                    # only save top level key for save_dir
+                    cfg["save_dir"] = config.save_dir.split("/")[0]
+                    OmegaConf.save(cfg, os.path.join(config.save_dir, "config.yaml"))
                 callback = config.init_obj(
                     ["callbacks", cb_obj_name], tf.keras.callbacks,
                     on_epoch_end=lambda epoch, logs: _update_initial_epoch(epoch))
@@ -96,10 +95,8 @@ def train(config: ConfigParser):
 
         # precedence is given to cli -r/--resume over json config resume_checkpoint
         resume_ckpt = None
-        if config.resume is not None:
-            resume_ckpt = config.resume
-        elif config.resume is None and config["resume_checkpoint"] is not None:
-            resume_ckpt = config["resume_checkpoint"]
+        if config.resume_checkpoint is not None:
+            resume_ckpt = config.resume_checkpoint
 
         if resume_ckpt is None:
             config.logger.info("Cold Starting")
@@ -147,7 +144,7 @@ def train(config: ConfigParser):
     # print model input, output shapes
     try:
         loaded_model = tf.keras.models.load_model(
-            config.save_dir / "retrain_model")
+            os.path.join(config.save_dir, "retrain_model.keras"))
         infer = loaded_model.signatures["serving_default"]
         config.logger.info(infer.structured_input_signature)
         config.logger.info(infer.structured_outputs)
@@ -157,29 +154,44 @@ def train(config: ConfigParser):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Tensorflow Training')
+    parser = argparse.ArgumentParser(description="Tensorflow Training")
     # primary cli args
-    parser.add_argument('--cfg', '--config', type=str, dest="config", default="config/train_image_clsf.json",
-                        help='config file path (default: %(default)s)')
-    parser.add_argument('--id', '--run_id', type=str, dest="run_id", default="train_" + datetime.now().strftime(r'%Y%m%d_%H%M%S'),
-                        help='unique identifier for train process. Annotates train ckpts & logs. (default: %(default)s)')
-    parser.add_argument('-r', '--resume', type=str, dest="resume", default=None,
-                        help='path to resume ckpt. Overrides `resume_checkpoint` in config. (default: %(default)s)')
+    parser.add_argument(
+        "--cfg", "--config", type=str, dest="config", default="config/train_image_clsf.yaml",
+        help="YAML config file path (default: %(default)s)")
+    parser.add_argument(
+        "--id", "--run_id", type=str, dest="run_id", default="train_" + datetime.now().strftime(r"%Y%m%d_%H%M%S"),
+        help="Unique identifier for train process. Annotates train ckpts & logs. (default: %(default)s)")
+    parser.add_argument(
+        "-o", "--override", type=str, nargs="+", dest="override", default=None,
+        help="Override YAML config params. e.g. -o seed:1 dataset:args:name:NewDataset (default: %(default)s)")
+    parser.add_argument(
+        "-r", "--resume_checkpoint", type=str, dest="resume_checkpoint",
+        help="Path to resume ckpt. Overrides `resume_checkpoint` in config.")
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", dest="verbose", default=False,
+        help="Run training in verbose mode (default: %(default)s)")
 
-    # custom cli options to modify configuration from default values given in json file.
-    # should be used to reset train params when resuming checkpoint, i.e. reducing LR
-    OverrideArgs = collections.namedtuple(
-        'OverrideArgs', 'flags dest help type target')
-    options = [
-        OverrideArgs(['--lr', '--learning_rate'],
-                     dest="learning_rate", help="lr param to override that in config. (default: %(default)s)",
-                     type=float, target='optimizer;args;learning_rate'),
-        OverrideArgs(['--bs', '--train_bsize'],
-                     dest="train_bsize", help="train bsize to override that in config. (default: %(default)s)",
-                     type=int, target='data;train_bsize')
-    ]
-    config = ConfigParser.from_args(parser, options)
-    train(config)
+    # additional args
+    parser.add_argument(
+        "--lr", "--learning_rate", type=float, dest="learning_rate", default=None,
+        help="lr param to override that in config. (default: %(default)s)")
+    parser.add_argument(
+        "--bs", "--train_bsize", type=int, dest="train_bsize", default=None,
+        help="train bsize to override that in config. (default: %(default)s)")
+    args = parser.parse_args()
+
+    # To override key-value params from YAML file,
+    # match the YAML kv structure for any additional args above
+    # keys-val pairs can have nested structure separated by colons
+    yaml_modification = {
+        "trainer:args:resume_checkpoint": args.resume_checkpoint,
+        "optimizer:args:learning_rate": args.learning_rate,
+        "data:train_bsize": args.train_bsize,
+    }
+    # get custom omegaconf DictConfig-like obj
+    cfg = ConfigParser.from_args(args, yaml_modification)
+    train(cfg)
 
 
 if __name__ == "__main__":

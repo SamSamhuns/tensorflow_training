@@ -1,93 +1,110 @@
+import os
+import os.path as osp
+import random
 import logging
-from pathlib import Path
+import argparse
 from operator import getitem
 from datetime import datetime
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Optional
 from functools import partial, reduce
 
-import random
 import numpy as np
 import tensorflow as tf
+from omegaconf import OmegaConf, DictConfig
 from dotenv import dotenv_values
 from easydict import EasyDict as edict
 from tf_train.logging import setup_logging_config
 from tf_train.model.models_info import model_info_dict
 from tf_train.utils.tf_utils import count_samples_in_tfr
-from tf_train.utils.common_utils import read_json, write_json
+from tf_train.utils.common import try_bool, try_null, get_git_revision_hash
 
 
 class ConfigParser:
-    def __init__(self, config: dict, run_id: str = None, resume: str = None, modification: dict = None):
-        """
-        class to parse configuration json file.
-        Handles hyperparameters for training, initializations of modules,
-        checkpoint saving and logging module.
-        :param config: Dict with configs & HPs to train. contents of `config/train_image_clsf.json` file for example.
-        :param resume: String, path to the checkpoint being loaded.
-        :param run_id: Unique Identifier for train & test. Used to save ckpts & training log. Timestamp is used as default
-        """
-        # load config file and apply any modification
-        config = _update_config(config, modification)
+    """
+    class to parse configuration json file.
+    Handles hyperparameters for training, initializations of modules,
+    checkpoint saving and logging module.
+
+    Args:
+        config: DictConfig object with configurations.
+        run_id: Unique Identifier for train & test. Used to save ckpts & training log.
+        modification: Additional key-value pairs to override in config.
+    """
+    def __init__(self,
+                 config: DictConfig,
+                 run_id: Optional[str] = None,
+                 verbose: bool = False,
+                 modification: dict = None):
+        self.config = config
+
+        # Apply any modifications to the configuration
+        if modification:
+            # Removes keys that have None as values
+            modification = {k:v for k,v in modification.items() if v}
+            apply_modifications(self.config, modification)
+
         # set seed
-        seed = config["seed"]
+        seed = config.seed
         random.seed(seed)
         np.random.seed(seed)
         tf.random.set_seed(seed)
 
-        # set save_dir where trained model and log will be saved.
-        save_dir = Path(config['trainer']['save_dir'])
-        exper_name = config['name']
-        if run_id is None:  # use timestamp as default run-id
-            run_id = datetime.now().strftime(r'%Y%m%d_%H_%M_%S')
-        self._save_dir = save_dir / 'models' / exper_name / run_id
-        self._log_dir = save_dir / 'logs' / exper_name / run_id
+        # If run_id is None, use timestamp as default run-id
+        if run_id is None:
+            run_id = datetime.now().strftime(r"%Y%m%d_%H%M%S")
+        self.run_id = run_id
+        self.verbose = verbose
+        self.git_hash = get_git_revision_hash()
+
+        # Set directories for saving logs and models
+        _log_dir = osp.join(config.save_dir, config.name, run_id, "logs")
+        _save_dir = osp.join(config.save_dir, config.name, run_id, "models")
 
         # add tensorboard logging dirs
-        if config["trainer"]["use_tensorboard"]:
-            _slog = str(save_dir / "tf_logs" / run_id / "scalars")
-            _plog = str(save_dir / "tf_logs" / run_id / "prune")
-            _ilog = str(save_dir / "tf_logs" / run_id / "images")
-            config["trainer"]["tf_scalar_logs"] = _slog
-            config["trainer"]["tf_prune_logs"] = _plog
-            config["trainer"]["tf_image_logs"] = _ilog
+        if config.trainer.use_tensorboard:
+            _slog = osp.join(config.save_dir, config.name, run_id, "tf_logs", "scalars")
+            _plog = osp.join(config.save_dir, config.name, run_id, "tf_logs", "prune")
+            _ilog = osp.join(config.save_dir, config.name, run_id, "tf_logs", "images")
+            self.config.trainer.tf_scalar_logs = _slog
+            self.config.trainer.tf_prune_logs = _plog
+            self.config.trainer.tf_image_logs = _ilog
 
-        # make directory for saving checkpoints and log.
-        self.save_dir.mkdir(parents=True, exist_ok=True)
-        self.log_dir.mkdir(parents=True, exist_ok=True)
+        # Create necessary directories
+        os.makedirs(_save_dir, exist_ok=True)
+        os.makedirs(_log_dir, exist_ok=True)
 
         # dump custom env vars from .env file to config.json
         custom_env_vars = dotenv_values(".env")
-        config["os_vars"] = custom_env_vars
+        self.config.os_vars = dict(custom_env_vars)
 
         # check if num_classes count matches number of classes in class_map_txt_path
-        n_cls = config["data"]["num_classes"]
-        class_map_txt = config["data"]["class_map_txt_path"]
-        assert Path(class_map_txt).exists(), f"{class_map_txt} does not exist"
-        with open(class_map_txt, 'r') as fptr:
+        n_cls = config.data.num_classes
+        class_map_txt = config.data.class_map_txt_path
+        assert osp.exists(class_map_txt), f"{class_map_txt} does not exist"
+        with open(class_map_txt, 'r', encoding="utf-8") as fptr:
             n_fcls = len(fptr.readlines())
             assert n_fcls == n_cls, f"num_classes {n_cls} and classes in {class_map_txt} {n_fcls} don't match"
 
         # count total training and validation samples if they are not explicitely provided
-        num_train = config["data"]["num_train_samples"]
+        num_train = config.data.num_train_samples
         if num_train:
             print(f"Note: num_train_samples: {num_train} was provided in config.",
                   "Make sure this is correct since train epoch size depends on this")
         else:
-            config["data"]["num_train_samples"] = count_samples_in_tfr(
-                config["data"]["train_data_dir"])
-        num_val = config["data"]["num_val_samples"]
+            self.config.data.num_train_samples = count_samples_in_tfr(config.data.train_data_dir)
+        num_val = config.data.num_val_samples
         if num_val:
             print(f"Note: num_val_samples: {num_val} was provided in config.",
                   "Make sure this is correct since val epoch size depends on this")
         else:
-            config["data"]["num_val_samples"] = count_samples_in_tfr(
-                config["data"]["val_data_dir"])
+            self.config.data.num_val_samples = count_samples_in_tfr(
+                config.data.val_data_dir)
 
-        # save updated config file to the checkpoint dir
-        write_json(config, self.save_dir / 'config.json')
+        # Save the updated config to the save directory
+        OmegaConf.save(self.config, osp.join(_save_dir, "config.yaml"))
 
         # configure logging module
-        setup_logging_config(self.log_dir)
+        setup_logging_config(_log_dir)
         self.log_levels = {
             0: logging.WARNING,
             1: logging.INFO,
@@ -96,33 +113,40 @@ class ConfigParser:
 
         # set model info obj, config obj and resume chkpt
         self._model = edict(model_info_dict[config["arch"]])
-        self._config = config
-        self.resume = resume
+        # assign updated log and save dir after saving config
+        self.config.log_dir = _log_dir
+        self.config.save_dir = _save_dir
 
     @classmethod
-    def from_args(cls, parser, options: List):
+    def from_args(cls,
+                  args: argparse.Namespace,
+                  modification: Optional[dict] = None,
+                  add_all_args: bool = True):
         """
-        Initialize this class from some cli arguments. Used in train, test.
+        Initialize this class from CLI arguments. Used in train, test.
+        Args:
+            args: Parsed CLI arguments.
+            modification: Key-value pair to override in config.
+                          Can have nested structure separated by colons.
+                          e.g. ["key1:val1", "key2:sub_key2:val2"]
+            add_all_args: Add all args to modification 
+                          that are not alr present as top-level keys.
         """
-        for opt in options:
-            # add optional overrride arguments to parser
-            parser.add_argument(
-                *opt.flags, default=None, type=opt.type, dest=opt.dest, help=opt.help)
-        if not isinstance(parser, tuple):
-            args = parser.parse_args()
+        modification = {} if not modification else modification
+        # Add all args to modification from args
+        if add_all_args:
+            # only check top-level keys
+            mod_keys = {k.rsplit(':')[0] for k in modification}
+            for arg, value in vars(args).items():
+                if arg not in mod_keys:
+                    modification[arg] = value
+        # Override configuration parameters if args.override is provided
+        if args.override:
+            parse_and_cast_kv_overrides(args.override, modification)
 
-        resume = args.resume
-        run_id = args.run_id
-        cfg_fname = Path(args.config)
-        config = read_json(cfg_fname)
-        if args.config and resume:
-            # update new config for fine-tuning
-            config.update(read_json(args.config))
-
-        # parse custom cli options into dictionary
-        modification = {opt.target: getattr(
-            args, opt.dest) for opt in options}
-        return cls(config, run_id, resume, modification)
+        # Load configuration from YAML
+        config = OmegaConf.load(args.config)
+        return cls(config, args.run_id, args.verbose, modification)
 
     def init_obj(self, name, module, *args, **kwargs):
         """
@@ -138,8 +162,7 @@ class ConfigParser:
             name = [name]
         module_name = _get_by_path(self, name + ["type"])
         module_args = dict(_get_by_path(self, name + ["args"]))
-        assert all([k not in module_args for k in kwargs]
-                   ), 'Overwriting kwargs given in config file is not allowed'
+        assert all(k not in module_args for k in kwargs), 'Overwriting kwargs given in config file is not allowed'
         module_args.update(kwargs)
         return getattr(module, module_name)(*args, **module_args)
 
@@ -165,7 +188,14 @@ class ConfigParser:
 
     def __getitem__(self, name: str):
         """Access items like ordinary dict."""
-        return self.config[name]
+        return self.__getattr__(name)
+
+    def __getattr__(self, name):
+        """Delegate attribute access to the config object."""
+        if hasattr(self.config, name):
+            return getattr(self.config, name)
+        raise AttributeError(
+            f"'{type(self).__name__}' object has no attribute '{name}'")
 
     def setup_logger(self, name: str, verbosity: int = 2):
         msg_verbosity = 'verbosity option {} is invalid. Valid options are {}.'.format(
@@ -178,45 +208,47 @@ class ConfigParser:
 
     # set read-only attributes
     @property
-    def config(self):
-        return self._config
-
-    @property
     def model(self):
         return self._model
-
-    @property
-    def save_dir(self):
-        return self._save_dir
-
-    @property
-    def log_dir(self):
-        return self._log_dir
+    
+    def __str__(self):
+        return OmegaConf.to_yaml(self.config)
 
 
-##################################################################
-# helper functions to update config dict with custom cli options #
-##################################################################
-
-
-def _update_config(config: Dict, modification: Dict[str, str]) -> Dict:
+def apply_modifications(config: DictConfig, modification: dict) -> None:
     """
-    Update config dict with param_path:value k:v pairs
-    i.e. param_path : value = "optimizer;args;learning_rate" : 0.001
+    Applies modifications to a nested DictConfig object using colon-separated keys inplace.
+    Args:
+        config (DictConfig): Original configuration object.
+        modification (dict): Dictionary with colon-separated keys representing the hierarchy and values to override.
     """
-    if modification is None:
-        return config
+    for key, value in modification.items():
+        path = key.split(":")
+        node = config
+        for part in path[:-1]:  # Traverse to the parent node
+            if part not in node:
+                node[part] = {}  # Create nested structure if missing
+            node = node[part]
+        node[path[-1]] = value
 
-    for k, v in modification.items():
-        if v is not None:
-            _set_by_path(config, k, v)
-    return config
 
-
-def _set_by_path(tree: Dict, keys: List[str], value: str) -> None:
-    """Set a value in a nested object in tree by sequence of keys."""
-    keys = keys.split(';')
-    _get_by_path(tree, keys[:-1])[keys[-1]] = value
+def parse_and_cast_kv_overrides(override: List[str], modification: dict) -> None:
+    """
+    Parses a list of key-val override strings and casts values to appropriate types inplace.
+    Args:
+        override (List[str]): List of strings in the format "key:value" or "key:child1:child2:....:val".
+                 Bool should be passed as true & None should be passed as null
+    """
+    for opt in override:
+        key, val = opt.rsplit(":", 1)
+        # Attempt to cast the value to an appropriate type
+        for cast in (int, float, try_bool, try_null):
+            try:
+                val = cast(val)
+                break
+            except (ValueError, TypeError):
+                continue
+        modification[key] = val
 
 
 def _get_by_path(tree: Dict, keys: Union[str, List[str]]):

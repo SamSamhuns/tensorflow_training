@@ -92,8 +92,8 @@ def save_model(model, train_time, config):
         model1 = converter.convert()
         with open(osp.join(config.save_dir, "qa.tflite"), "wb") as f:
             f.write(model1)
-        retrain_path /= "qa_retrain_model"
-        infer_path /= "qa_infer_model"
+        retrain_path = osp.join(retrain_path, "qa_retrain_model")
+        infer_path = osp.join(infer_path, "qa_infer_model")
         tf.keras.models.save_model(model, retrain_path, include_optimizer=True)
         tf.keras.models.save_model(model, infer_path, include_optimizer=False)
         print_flops_n_train_tm(config, model, infer_path, train_time)
@@ -112,8 +112,9 @@ def save_model(model, train_time, config):
         with open(osp.join(config.save_dir, "ptq.tflite"), "wb") as f:
             f.write(model1)
     elif use_clustering or cluster_layers:
-        retrain_path /= "cluster_retrain_model"
-        infer_path /= "cluster_infer_model"
+        infer_path = osp.join(infer_path, "cluster_infer_model")
+        retrain_path = osp.join(retrain_path, "cluster_retrain_model")
+
         tf.keras.models.save_model(model, retrain_path, include_optimizer=True)
         model = tfmot.clustering.keras.strip_clustering(model)
         tf.keras.models.save_model(model, infer_path, include_optimizer=False)
@@ -136,8 +137,9 @@ def save_model(model, train_time, config):
         with open(osp.join(config.save_dir, "cluster_ptq.tflite"), "wb") as f:
             f.write(model1)
     elif prune_layers:
-        retrain_path /= "prune_retrain_model"
-        infer_path /= "prune_infer_model"
+        infer_path = osp.join(infer_path, "prune_infer_model")
+        retrain_path = osp.join(retrain_path, "prune_retrain_model")
+
         tf.keras.models.save_model(model, retrain_path, include_optimizer=True)
         model = tfmot.sparsity.keras.strip_pruning(model)
         tf.keras.models.save_model(model, infer_path, include_optimizer=False)
@@ -162,6 +164,7 @@ def save_model(model, train_time, config):
     else:
         infer_path = osp.join(infer_path, "infer_model")
         retrain_path = osp.join(retrain_path, "retrain_model")
+        # save in savedmodel format
         tf.keras.models.save_model(model, retrain_path, include_optimizer=True)
         tf.keras.models.save_model(model, infer_path, include_optimizer=False)
         print_flops_n_train_tm(config, model, infer_path, train_time)

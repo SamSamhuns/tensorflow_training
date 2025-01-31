@@ -1,18 +1,18 @@
-# set env ars from .env before importing any python libraries
 from dotenv import load_dotenv
 load_dotenv(".env")
-
-import io
-import time
-import argparse
-from datetime import datetime
-from contextlib import redirect_stdout
-
-import tqdm
-import numpy as np
-import tensorflow as tf
-import tf_train.metric as module_metric
+# set env ars from .env before importing any python libraries
 from tf_train.config_parser import ConfigParser
+import tf_train.metric as module_metric
+import tensorflow as tf
+import numpy as np
+import tf_keras
+import tqdm
+from contextlib import redirect_stdout
+from datetime import datetime
+import argparse
+import time
+import os
+import io
 
 
 def get_class_name_list(mapping_file: str):
@@ -31,8 +31,9 @@ def get_class_name_list(mapping_file: str):
 
 def test(config: ConfigParser):
     config.setup_logger('test')
+    # tf.keras.models.load_model is not working so tf_keras.models.load_model is used
+    model = tf_keras.models.load_model(config.resume_checkpoint)
 
-    model = tf.keras.models.load_model(config.resume)
     h, w, _ = config.model.args.input_shape
     classes_list = get_class_name_list(config["data"]["class_map_txt_path"])
 
@@ -72,7 +73,7 @@ def test(config: ConfigParser):
     model_summary = f.getvalue()
     config.logger.info(model_summary)
     config.logger.info(f"Classes_list: {classes_list}")
-    config.logger.info(f"Statistics for model: {config.resume}")
+    config.logger.info(f"Statistics for model: {config.resume_checkpoint}")
 
     met_val_dict = {}
     met_func_dict = {}
@@ -83,7 +84,7 @@ def test(config: ConfigParser):
                                     num_classes=n_cls)
         elif _metric in {"plot_confusion_matrix"}:
             mfunc = config.init_ftn(["test_metrics", _metric], module_metric,
-                                    target_names=classes_list, savepath=str(config.log_dir / "cm.jpg"))
+                                    target_names=classes_list, savepath=os.path.join(config.log_dir, "cm.jpg"))
         else:
             mfunc = config.init_ftn(["test_metrics", _metric], module_metric)
         met_func_dict[_metric] = mfunc
@@ -99,14 +100,32 @@ def test(config: ConfigParser):
 
 def main():
     parser = argparse.ArgumentParser(description='Tensorflow Testing')
-    parser.add_argument('--cfg', '--config', type=str, dest="config", default="config/train_image_clsf.json",
-                        help="config file path (default: %(default)s)")
-    parser.add_argument('-r', '--resume', type=str, dest="resume", required=True,
-                        help="path to checkpoint to use for testing")
-    parser.add_argument('--id', '--run_id', type=str, dest="run_id", default="test_" + datetime.now().strftime(r'%Y%m%d_%H%M%S'),
-                        help='unique identifier for test process. Annotates test logs. (default: %(default)s)')
-    config = ConfigParser.from_args(parser, options=[])
-    test(config)
+    parser.add_argument(
+        '--cfg', '--config', type=str, dest="config", required=True,
+        help="YAML config file path.")
+    parser.add_argument(
+        '-r', '--resume_checkpoint', type=str, dest="resume_checkpoint", required=True,
+        help="Path to checkpoint to use for testing")
+    parser.add_argument(
+        '--id', '--run_id', type=str, dest="run_id", default="test_" + datetime.now().strftime(r'%Y%m%d_%H%M%S'),
+        help='Unique identifier for test process. Annotates test logs. (default: %(default)s)')
+    parser.add_argument(
+        "-o", "--override", type=str, nargs="+", dest="override", default=None,
+        help="Override YAML config params. e.g. -o seed:1 dataset:args:name:NewDataset (default: %(default)s)")
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", dest="verbose", default=False,
+        help="Run training in verbose mode (default: %(default)s)")
+    args = parser.parse_args()
+
+    # To override key-value params from YAML file,
+    # match the YAML kv structure for any additional args above
+    # keys-val pairs can have nested structure separated by colons
+    yaml_modification = {
+        "trainer:args:resume_checkpoint": args.resume_checkpoint,
+    }
+    # get custom omegaconf DictConfig-like obj
+    cfg = ConfigParser.from_args(args, yaml_modification)
+    test(cfg)
 
 
 if __name__ == "__main__":
