@@ -1,4 +1,4 @@
-name: Image_Classification
+experiment_name: Image_Classification
 save_dir: checkpoints
 seed: 42
 resume_checkpoint: null
