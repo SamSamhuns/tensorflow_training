@@ -1,5 +1,6 @@
 import os
 import os.path as osp
+import copy
 import random
 import logging
 import argparse
@@ -35,7 +36,7 @@ class ConfigParser:
                  run_id: Optional[str] = None,
                  verbose: bool = False,
                  modification: dict = None):
-        self.config = config
+        self.config = copy.deepcopy(config)
 
         # Apply any modifications to the configuration
         if modification:
@@ -44,7 +45,7 @@ class ConfigParser:
             apply_modifications(self.config, modification)
 
         # set seed
-        seed = config.seed
+        seed = self.config.seed
         random.seed(seed)
         np.random.seed(seed)
         tf.random.set_seed(seed)
@@ -57,13 +58,13 @@ class ConfigParser:
         self.git_hash = get_git_revision_hash()
 
         # Set directories for saving logs, metrics, and models
-        save_root = osp.join(config.save_dir, config.experiment_name, run_id)
+        save_root = osp.join(self.config.save_dir, self.config.experiment_name, run_id)
         _logs_dir = osp.join(save_root, "logs")
         _metrics_dir = osp.join(save_root, "metrics")
         _models_dir = osp.join(save_root, "models")
 
         # add tensorboard logging dirs
-        if config.trainer.use_tensorboard:
+        if self.config.trainer.use_tensorboard:
             self.config.trainer.tf_scalar_logs = osp.join(save_root, "tf_logs", "scalars")
             self.config.trainer.tf_prune_logs = osp.join(save_root, "tf_logs", "prune")
             self.config.trainer.tf_image_logs = osp.join(save_root, "tf_logs", "images")
@@ -78,27 +79,27 @@ class ConfigParser:
         self.config.os_vars = dict(custom_env_vars)
 
         # check if num_classes count matches number of classes in class_map_txt_path
-        n_cls = config.data.num_classes
-        class_map_txt = config.data.class_map_txt_path
+        n_cls = self.config.data.num_classes
+        class_map_txt = self.config.data.class_map_txt_path
         assert osp.exists(class_map_txt), f"{class_map_txt} does not exist"
         with open(class_map_txt, 'r', encoding="utf-8") as fptr:
             n_fcls = len(fptr.readlines())
             assert n_fcls == n_cls, f"num_classes {n_cls} and classes in {class_map_txt} {n_fcls} don't match"
 
         # count total training and validation samples if they are not explicitely provided
-        num_train = config.data.num_train_samples
+        num_train = self.config.data.num_train_samples
         if num_train:
             print(f"Note: num_train_samples: {num_train} was provided in config.",
                   "Make sure this is correct since train epoch size depends on this")
         else:
-            self.config.data.num_train_samples = count_samples_in_tfr(config.data.train_data_dir)
-        num_val = config.data.num_val_samples
+            self.config.data.num_train_samples = count_samples_in_tfr(self.config.data.train_data_dir)
+        num_val = self.config.data.num_val_samples
         if num_val:
             print(f"Note: num_val_samples: {num_val} was provided in config.",
                   "Make sure this is correct since val epoch size depends on this")
         else:
             self.config.data.num_val_samples = count_samples_in_tfr(
-                config.data.val_data_dir)
+                self.config.data.val_data_dir)
 
         # Save the updated config to the save directory
         OmegaConf.save(self.config, osp.join(save_root, "config.yaml"))
@@ -112,7 +113,7 @@ class ConfigParser:
         }
 
         # set model info obj, config obj and resume chkpt
-        self._model = edict(model_info_dict[config["arch"]])
+        self._model = edict(model_info_dict[self.config.arch])
         # assign updated log and save dir after saving config
         self.config.logs_dir = _logs_dir
         self.config.metrics_dir = _metrics_dir
