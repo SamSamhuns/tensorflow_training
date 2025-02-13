@@ -56,22 +56,22 @@ class ConfigParser:
         self.verbose = verbose
         self.git_hash = get_git_revision_hash()
 
-        # Set directories for saving logs and models
-        _log_dir = osp.join(config.save_dir, config.name, run_id, "logs")
-        _save_dir = osp.join(config.save_dir, config.name, run_id, "models")
+        # Set directories for saving logs, metrics, and models
+        save_root = osp.join(config.save_dir, config.experiment_name, run_id)
+        _logs_dir = osp.join(save_root, "logs")
+        _metrics_dir = osp.join(save_root, "metrics")
+        _models_dir = osp.join(save_root, "models")
 
         # add tensorboard logging dirs
         if config.trainer.use_tensorboard:
-            _slog = osp.join(config.save_dir, config.name, run_id, "tf_logs", "scalars")
-            _plog = osp.join(config.save_dir, config.name, run_id, "tf_logs", "prune")
-            _ilog = osp.join(config.save_dir, config.name, run_id, "tf_logs", "images")
-            self.config.trainer.tf_scalar_logs = _slog
-            self.config.trainer.tf_prune_logs = _plog
-            self.config.trainer.tf_image_logs = _ilog
+            self.config.trainer.tf_scalar_logs = osp.join(save_root, "tf_logs", "scalars")
+            self.config.trainer.tf_prune_logs = osp.join(save_root, "tf_logs", "prune")
+            self.config.trainer.tf_image_logs = osp.join(save_root, "tf_logs", "images")
 
         # Create necessary directories
-        os.makedirs(_save_dir, exist_ok=True)
-        os.makedirs(_log_dir, exist_ok=True)
+        os.makedirs(_logs_dir, exist_ok=True)
+        os.makedirs(_metrics_dir, exist_ok=True)
+        os.makedirs(_models_dir, exist_ok=True)
 
         # dump custom env vars from .env file to config.json
         custom_env_vars = dotenv_values(".env")
@@ -101,10 +101,10 @@ class ConfigParser:
                 config.data.val_data_dir)
 
         # Save the updated config to the save directory
-        OmegaConf.save(self.config, osp.join(_save_dir, "config.yaml"))
+        OmegaConf.save(self.config, osp.join(save_root, "config.yaml"))
 
         # configure logging module
-        setup_logging_config(_log_dir)
+        setup_logging_config(_logs_dir)
         self.log_levels = {
             0: logging.WARNING,
             1: logging.INFO,
@@ -114,8 +114,9 @@ class ConfigParser:
         # set model info obj, config obj and resume chkpt
         self._model = edict(model_info_dict[config["arch"]])
         # assign updated log and save dir after saving config
-        self.config.log_dir = _log_dir
-        self.config.save_dir = _save_dir
+        self.config.logs_dir = _logs_dir
+        self.config.metrics_dir = _metrics_dir
+        self.config.models_dir = _models_dir
 
     @classmethod
     def from_args(cls,

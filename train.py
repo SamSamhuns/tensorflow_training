@@ -69,9 +69,9 @@ def train(config: ConfigParser):
             elif cb_obj_name == "ckpt_callback":
                 callback = config.init_obj(
                     ["callbacks", cb_obj_name], tf.keras.callbacks,
-                    filepath=os.path.join(config.save_dir, config["trainer"]["ckpt_fmt"]))
+                    filepath=os.path.join(config.models_dir, config["trainer"]["ckpt_fmt"]))
             elif cb_obj_name == "epoch_log_lambda_callback":
-                log_file = open(os.path.join(config.log_dir, "info.log"), mode="a", buffering=1, encoding="utf-8")
+                log_file = open(os.path.join(config.logs_dir, "info.log"), mode="a", buffering=1, encoding="utf-8")
                 callback = config.init_obj(
                     ["callbacks", cb_obj_name], tf.keras.callbacks,
                     on_epoch_end=lambda epoch, logs: log_file.write(
@@ -82,9 +82,9 @@ def train(config: ConfigParser):
                 def _update_initial_epoch(epoch):
                     config.trainer.initial_epoch = epoch
                     cfg = dict(config.config)
-                    # only save top level key for save_dir
-                    cfg["save_dir"] = config.save_dir.split("/")[0]
-                    OmegaConf.save(cfg, os.path.join(config.save_dir, "config.yaml"))
+                    # save updated initial_epoch to config.yaml
+                    save_root = os.path.join(config.save_dir, config.experiment_name, config.run_id)
+                    OmegaConf.save(cfg, os.path.join(save_root, "config.yaml"))
                 callback = config.init_obj(
                     ["callbacks", cb_obj_name], tf.keras.callbacks,
                     on_epoch_end=lambda epoch, logs: _update_initial_epoch(epoch))
@@ -143,8 +143,7 @@ def train(config: ConfigParser):
 
     # print model input, output shapes
     try:
-        loaded_model = tf.keras.models.load_model(
-            os.path.join(config.save_dir, "retrain_model.keras"))
+        loaded_model = tf.keras.models.load_model(os.path.join(config.models_dir, "retrain_model"))
         infer = loaded_model.signatures["serving_default"]
         config.logger.info(infer.structured_input_signature)
         config.logger.info(infer.structured_outputs)

@@ -84,7 +84,7 @@ def test(config: ConfigParser):
                                     num_classes=n_cls)
         elif _metric in {"plot_confusion_matrix"}:
             mfunc = config.init_ftn(["test_metrics", _metric], module_metric,
-                                    target_names=classes_list, savepath=os.path.join(config.log_dir, "cm.jpg"))
+                                    target_names=classes_list, savepath=os.path.join(config.logs_dir, "cm.jpg"))
         else:
             mfunc = config.init_ftn(["test_metrics", _metric], module_metric)
         met_func_dict[_metric] = mfunc
