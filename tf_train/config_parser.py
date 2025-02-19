@@ -6,7 +6,7 @@ import logging
 import argparse
 from operator import getitem
 from datetime import datetime
-from typing import List, Dict, Union, Optional
+from typing import List, Dict, Union, Optional, Any
 from functools import partial, reduce
 
 import numpy as np
@@ -41,7 +41,7 @@ class ConfigParser:
         # Apply any modifications to the configuration
         if modification:
             # Removes keys that have None as values
-            modification = {k:v for k,v in modification.items() if v}
+            modification = {k:v for k,v in modification.items() if v is not None}
             apply_modifications(self.config, modification)
 
         # set seed
@@ -140,7 +140,7 @@ class ConfigParser:
             # only check top-level keys
             mod_keys = {k.rsplit(':')[0] for k in modification}
             for arg, value in vars(args).items():
-                if arg not in mod_keys:
+                if arg not in mod_keys and arg not in {"override"}:
                     modification[arg] = value
         # Override configuration parameters if args.override is provided
         if args.override:
@@ -236,21 +236,30 @@ def apply_modifications(config: DictConfig, modification: dict) -> None:
 
 def parse_and_cast_kv_overrides(override: List[str], modification: dict) -> None:
     """
-    Parses a list of key-val override strings and casts values to appropriate types inplace.
+    Parses a list of key-value override strings and casts values to appropriate types in place.
+    Supports overriding lists using comma-separated values.
+
     Args:
-        override (List[str]): List of strings in the format "key:value" or "key:child1:child2:....:val".
-                 Bool should be passed as true & None should be passed as null
+        override (List[str]): List of strings in the format "key:value" or "key:sub_key1:sub_key2:val".
+                              Lists can also be passed as values with "key:val1,val2,val3".
+        modification (dict): Dictionary to store parsed key-value pairs.
     """
-    for opt in override:
-        key, val = opt.rsplit(":", 1)
-        # Attempt to cast the value to an appropriate type
+    def cast_value(val) -> Any:
+        """Attempts to cast a value to int, float, bool, None, or leaves it as a string."""
         for cast in (int, float, try_bool, try_null):
             try:
-                val = cast(val)
-                break
+                return cast(val)
             except (ValueError, TypeError):
                 continue
-        modification[key] = val
+        return val  # Fallback to string if no other type matches
+
+    for opt in override:
+        # split at the last colon, i.e. key:subkey:val -> key:subkey, val
+        key, val = opt.rsplit(":", 1)
+        if "," in val:  # If it's a list
+            modification[key] = [cast_value(v) for v in val.split(",")]
+        else:
+            modification[key] = cast_value(val)
 
 
 def _get_by_path(tree: Dict, keys: Union[str, List[str]]):
