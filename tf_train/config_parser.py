@@ -17,7 +17,7 @@ from easydict import EasyDict as edict
 from tf_train.logging import setup_logging_config
 from tf_train.model.models_info import model_info_dict
 from tf_train.utils.tf_utils import count_samples_in_tfr
-from tf_train.utils.common import try_bool, try_null, get_git_revision_hash
+from tf_train.utils.common import get_git_revision_hash
 
 
 class ConfigParser:
@@ -42,7 +42,8 @@ class ConfigParser:
         if modification:
             # Removes keys that have None as values
             modification = {k:v for k,v in modification.items() if v is not None}
-            apply_modifications(self.config, modification)
+            for k, v in modification.items():
+                OmegaConf.update(self.config, k, v, merge=True)
 
         # set seed
         seed = self.config.seed
@@ -138,16 +139,18 @@ class ConfigParser:
         # Add all args to modification from args
         if add_all_args:
             # only check top-level keys
-            mod_keys = {k.rsplit(':')[0] for k in modification}
+            mod_keys = {k.rsplit('.')[0] for k in modification}
             for arg, value in vars(args).items():
                 if arg not in mod_keys and arg not in {"override"}:
                     modification[arg] = value
-        # Override configuration parameters if args.override is provided
-        if args.override:
-            parse_and_cast_kv_overrides(args.override, modification)
 
         # Load configuration from YAML
         config = OmegaConf.load(args.config)
+        # Apply dotlist overrides (-o)
+        if args.override:
+            dotlist_overrides = OmegaConf.from_dotlist(args.override)
+            config = OmegaConf.merge(config, dotlist_overrides)
+
         return cls(config, args.run_id, args.verbose, modification)
 
     def init_obj(self, name, module, *args, **kwargs):
@@ -215,51 +218,6 @@ class ConfigParser:
     
     def __str__(self):
         return OmegaConf.to_yaml(self.config)
-
-
-def apply_modifications(config: DictConfig, modification: dict) -> None:
-    """
-    Applies modifications to a nested DictConfig object using colon-separated keys inplace.
-    Args:
-        config (DictConfig): Original configuration object.
-        modification (dict): Dictionary with colon-separated keys representing the hierarchy and values to override.
-    """
-    for key, value in modification.items():
-        path = key.split(":")
-        node = config
-        for part in path[:-1]:  # Traverse to the parent node
-            if part not in node:
-                node[part] = {}  # Create nested structure if missing
-            node = node[part]
-        node[path[-1]] = value
-
-
-def parse_and_cast_kv_overrides(override: List[str], modification: dict) -> None:
-    """
-    Parses a list of key-value override strings and casts values to appropriate types in place.
-    Supports overriding lists using comma-separated values.
-
-    Args:
-        override (List[str]): List of strings in the format "key:value" or "key:sub_key1:sub_key2:val".
-                              Lists can also be passed as values with "key:val1,val2,val3".
-        modification (dict): Dictionary to store parsed key-value pairs.
-    """
-    def cast_value(val) -> Any:
-        """Attempts to cast a value to int, float, bool, None, or leaves it as a string."""
-        for cast in (int, float, try_bool, try_null):
-            try:
-                return cast(val)
-            except (ValueError, TypeError):
-                continue
-        return val  # Fallback to string if no other type matches
-
-    for opt in override:
-        # split at the last colon, i.e. key:subkey:val -> key:subkey, val
-        key, val = opt.rsplit(":", 1)
-        if "," in val:  # If it's a list
-            modification[key] = [cast_value(v) for v in val.split(",")]
-        else:
-            modification[key] = cast_value(val)
 
 
 def _get_by_path(tree: Dict, keys: Union[str, List[str]]):

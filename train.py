@@ -163,7 +163,8 @@ def main():
         help="Unique identifier for train process. Annotates train ckpts & logs. (default: %(default)s)")
     parser.add_argument(
         "-o", "--override", type=str, nargs="+", dest="override", default=None,
-        help="Override YAML config params. e.g. -o seed:1 dataset:args:name:NewDataset (default: %(default)s)")
+        help="Override config params. Must match keys in YAML config. "
+        "e.g. -o seed=1 dataset.type=NewDataType model.layers=[64,128,256] model.layers[2]=512 (default: %(default)s)")
     parser.add_argument(
         "-r", "--resume_checkpoint", type=str, dest="resume_checkpoint",
         help="Path to resume ckpt. Overrides `resume_checkpoint` in config.")
@@ -184,9 +185,9 @@ def main():
     # match the YAML kv structure for any additional args above
     # keys-val pairs can have nested structure separated by colons
     yaml_modification = {
-        "trainer:args:resume_checkpoint": args.resume_checkpoint,
-        "optimizer:args:learning_rate": args.learning_rate,
-        "data:train_bsize": args.train_bsize,
+        "trainer.args.resume_checkpoint": args.resume_checkpoint,
+        "optimizer.args.learning_rate": args.learning_rate,
+        "data.train_bsize": args.train_bsize,
     }
     # get custom omegaconf DictConfig-like obj
     cfg = ConfigParser.from_args(args, yaml_modification)
