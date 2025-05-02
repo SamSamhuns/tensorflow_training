@@ -6,7 +6,7 @@ import logging
 import argparse
 from operator import getitem
 from datetime import datetime
-from typing import List, Dict, Union, Optional, Any
+from typing import List, Dict, Union, Optional
 from functools import partial, reduce
 
 import numpy as np
@@ -17,7 +17,7 @@ from easydict import EasyDict as edict
 from tf_train.logging import setup_logging_config
 from tf_train.model.models_info import model_info_dict
 from tf_train.utils.tf_utils import count_samples_in_tfr
-from tf_train.utils.common import get_git_revision_hash
+from tf_train.utils.common import get_git_revision_hash, validate_override_keys_exist
 
 
 class ConfigParser:
@@ -149,6 +149,7 @@ class ConfigParser:
         # Apply dotlist overrides (-o)
         if args.override:
             dotlist_overrides = OmegaConf.from_dotlist(args.override)
+            validate_override_keys_exist(config, dotlist_overrides)
             config = OmegaConf.merge(config, dotlist_overrides)
 
         return cls(config, args.run_id, args.verbose, modification)
