@@ -17,7 +17,7 @@ from easydict import EasyDict as edict
 from tf_train.logging import setup_logging_config
 from tf_train.model.models_info import model_info_dict
 from tf_train.utils.tf_utils import count_samples_in_tfr
-from tf_train.utils.common import get_git_revision_hash, validate_override_keys_exist
+from tf_train.utils.common import get_git_revision_hash
 
 
 class ConfigParser:
@@ -149,8 +149,9 @@ class ConfigParser:
         # Apply dotlist overrides (-o)
         if args.override:
             dotlist_overrides = OmegaConf.from_dotlist(args.override)
-            validate_override_keys_exist(config, dotlist_overrides)
+            OmegaConf.set_struct(config, True)  # Enable strict mode to disallow unknown keys
             config = OmegaConf.merge(config, dotlist_overrides)
+            OmegaConf.set_struct(config, False)  # Disable strict mode to allow runtime modifications later
 
         return cls(config, args.run_id, args.verbose, modification)
 
