@@ -4,6 +4,6 @@ omegaconf==2.3.0
 opencv-python==4.10.0.84
 pillow==11.0.0
 python-multipart==0.0.18
-requests==2.32.3
+requests==2.32.4
 tritonclient[grpc]==2.52.0
 uvicorn==0.32.1
