@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import List, Dict, Union, Optional
 from functools import partial, reduce
 
+import yaml
 import numpy as np
 import tensorflow as tf
 from omegaconf import OmegaConf, DictConfig
@@ -18,6 +19,19 @@ from tf_train.logging import setup_logging_config
 from tf_train.model.models_info import model_info_dict
 from tf_train.utils.tf_utils import count_samples_in_tfr
 from tf_train.utils.common import get_git_revision_hash
+
+
+def parse_omegaconf_primitive(val_str):
+    """
+    Parses a string representation of a omegaconf value (int, float, str, bool, ${oc.env:HOME})
+    and returns the corresponding Python type.
+    Args:
+        val_str: String representation of the value.
+    Returns:
+        Parsed value as a Python type (int, float, str, bool).
+    """
+    wrapped = OmegaConf.create({"_val_": yaml.safe_load(val_str)})
+    return OmegaConf.to_container(wrapped, resolve=True)["_val_"]
 
 
 class ConfigParser:
@@ -148,9 +162,12 @@ class ConfigParser:
         config = OmegaConf.load(args.config)
         # Apply dotlist overrides (-o)
         if args.override:
-            dotlist_overrides = OmegaConf.from_dotlist(args.override)
             OmegaConf.set_struct(config, True)  # Enable strict mode to disallow unknown keys
-            config = OmegaConf.merge(config, dotlist_overrides)
+            for override in args.override:
+                if '=' not in override:
+                    raise ValueError(f"Invalid override format: {override}. Expected format: key=value")
+                key, val_str = override.split("=", 1)
+                OmegaConf.update(config, key, parse_omegaconf_primitive(val_str))
             OmegaConf.set_struct(config, False)  # Disable strict mode to allow runtime modifications later
 
         return cls(config, args.run_id, args.verbose, modification)
