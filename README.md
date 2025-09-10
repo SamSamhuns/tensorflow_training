@@ -23,15 +23,14 @@ Train TensorFlow models for image/video/features classification or other tasks. 
     - [Track training with tensorBoard](#track-training-with-tensorboard)
   - [Model testing](#model-testing)
   - [TODO: Model webserver](#todo-model-webserver)
-  - [For Developers](#for-developers)
 
 ## Requirements
 
-Install tensorflow and related cudnn libraries from the [tensorflow-official-documentation](https://www.tensorflow.org/install/pip#install_cuda_with_apt) if cudnn librarues are not setup.
+Install `tensorflow` and related `cudnn` libraries from the [tensorflow-official-documentation](https://www.tensorflow.org/install/pip#install_cuda_with_apt) if `cudnn` libraries are not set up.
 
 ### Setup environment file
 
-Create a `.env` file with the following contents with the correct paths ensuring the correct CUDA install path:
+Create a `.env` file with the following contents with the correct paths ensuring the correct `CUDA` install path:
 
 ```yaml
 XLA_FLAGS="--xla_gpu_cuda_data_dir=/usr/local/cuda"
@@ -67,7 +66,7 @@ pip install -r requirements.txt
 
 #### Using GPU
 
-When using a python `venv`, CUDA libraries must be present in the current path. If CUDA was installed to `usr/local/cuda`, the following commands should be added to the current shell source file (`~/.bash_profile` or `~/.bashrc`).
+When using a python `venv`, `CUDA` libraries must be present in the current path. If `CUDA` was installed to `usr/local/cuda`, the following commands should be added to the current shell source file (`~/.bash_profile` or `~/.bashrc`).
 
 ```shell
 # Set cuda LD_LIBRARY_PATH
@@ -76,7 +75,7 @@ export LD_LIBRARY_PATH="/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
 export PATH="$PATH:/usr/local/cuda/bin"
 ```
 
-The environment variable `XLA_FLAGS="--xla_gpu_cuda_data_dir=/usr/local/cuda` must also be set to the cuda directory in the `.env` file.
+The environment variable `XLA_FLAGS="--xla_gpu_cuda_data_dir=/usr/local/cuda` must also be set to the `CUDA` directory in the `.env` file.
 
 ### Or, Install requirements with `conda`
 
@@ -90,7 +89,7 @@ Note: `Conda` sets the `cuda`, `cudnn` and `cudatoolkit` automatically, download
 
 ## Data Preparation
 
-Assuming the data directory must be organized according to the following structure, with sub-directories having class names containing images. THe CIFAR-10 dataset in JPG fomrat can be acquired from <https://github.com/YoongiKim/CIFAR-10-images> for a sample train and test.
+Assuming the data directory must be organized according to the following structure, with sub-directories having class names containing images. THe CIFAR-10 dataset in JPG format can be acquired from <https://github.com/YoongiKim/CIFAR-10-images> for a sample train and test.
 
 i.e.
 
@@ -124,7 +123,7 @@ i.e.
 
 ### OPTIONAL: Data Duplication and Cleaning
 
-If all the classes do not have equal number of training samples, data Duplication can be done.
+If all the classes do not have equal number of training samples, data duplication can be done.
 
 ```shell
 python data_preparation/duplicate_data.py --sd data/src_dataset --td data/duplicated_dataset -n NUM_TO_DUPLICATE
@@ -144,7 +143,7 @@ bash scripts/count_files_per_subdir.sh data/split_dataset
 
 ### Convert Data to tfrecords for faster training
 
-Note: The test split should not be converted into tfrecords and the original `data->class_sub_directory` format should be used.
+Note: The test split should not be converted into `tfrecords` and the original `data->class_sub_directory` format should be used.
 
 ```shell
 # convert train files into train tfrecord, select NUM_SHARDS so that each shard has a size of 100 MB+
@@ -154,11 +153,11 @@ python data_preparation/convert_imgs_to_tfrecord.py --sd data/split_dataset/val 
 # to use multiprocessing use the --mt flag
 ```
 
-Note: test dataset is not converted to tfrecord as fast-loading is not a priority as we only run through the test data once.
+Note: test dataset is not converted to `tfrecord` as fast-loading is not a priority as we only run through the test data once.
 
 ### OPTIONAL: Video Frame Extraction
 
-To extract frames from videos into `npy.npz` files install opencv and pyav, then run:
+To extract frames from videos into `npy.npz` files install `opencv` and `pyav`, then run:
 
 ```shell
 python data_preparation/extract_frames_from_video_dataset.py --sd SOURCE_DATA_DIR
@@ -169,7 +168,7 @@ python data_preparation/extract_frames_from_video_dataset.py --sd SOURCE_DATA_DI
 
 Configure all values in the `YAML` files inside the `config` dir. A sample config file is provided for training on the `src_dataset` directory in `config/train_image_clsf.yaml`.
 
-The model information repository is located at `tf_train/model/models_info.py`. New models can be added or model parameters can be modified through this file.
+The model information repository is located at `tensorflow_training/model/models_info.py`. New models can be added or model parameters can be modified through this file.
 
 ### Set environment variables
 
@@ -183,11 +182,11 @@ python train.py --cfg CONFIG_YAML_PATH [-r RESUME_CHECKPOINT_PATH]
 
 Notes:
 
--   Using the `-r` option while training will override the `resume_checkpoint` param in config yaml if this param is not null.
--   To add tensorflow logs to train/test logs, set `"disable_existing_loggers"` parameter to `true` in `tf_train/logging/logger_config.json`.
--   Out of Memory errors during training could be caused by large batch sizes, model size or dataset.cache() call in train preprocessing in `tf_train/pipelines/data_pipeline.py`.
--   When using mixed_float16 precision, the dtypes of the final dense and activation layers must be set to `float32`.
--   An error like: `ValueError: Unexpected result of train_function (Empty logs)` could be caused by incorrect paths to train and validation directories in the config.yaml files
+- Using the `-r` option while training will override the `resume_checkpoint` param in config yaml if this param is not null.
+- To add tensorflow logs to train/test logs, set `"disable_existing_loggers"` parameter to `true` in `tensorflow_training/logging/logger_config.json`.
+- Out of Memory errors during training could be caused by large batch sizes, model size or dataset.cache() call in train preprocessing in `tensorflow_training/pipelines/data_pipeline.py`.
+- When using mixed_float16 precision, the data types of the final dense and activation layers must be set to `float32`.
+- An error like: `ValueError: Unexpected result of train_function (Empty logs)` could be caused by incorrect paths to train and validation directories in the config.yaml files
 
 ### Track training with tensorBoard
 
@@ -198,7 +197,7 @@ tensorboard --logdir=checkpoints/tf_logs/ --port=PORT_NUM
 ## Model testing
 
 Make sure to set the correct `test_data_dir` under `data` and the `class_map_txt_path` under `tester` in the yaml config file.
-The class_map_txt_path file is generated by the `convert_imgs_to_tfrecord.py` script when converting images to tfrecord format.
+The class_map_txt_path file is generated by the `convert_imgs_to_tfrecord.py` script when converting images to `tfrecord` format.
 
 ```shell
 python test.py --cfg CONFIG_YAML_PATH -r TEST_CHECKPOINT_PATH
@@ -206,12 +205,4 @@ python test.py --cfg CONFIG_YAML_PATH -r TEST_CHECKPOINT_PATH
 
 ## TODO: Model webserver
 
-We can use a dockerized uvicorn and fastapi webserver with triton-server to serve the model through a HTTPS API endpoint. Instructions are at [tensorflow_training/server/README.md](server/README.md).
-
-## For Developers
-
-Unit and integration testing with pytest
-
-```shell
-python -m pytest tf_train  # from the top project directory
-```
+We can use a dockerized `uvicorn` and `fastapi` webserver with triton-server to serve the model through a HTTPS API endpoint. Instructions are at [tensorflow_training/server/README.md](server/README.md).

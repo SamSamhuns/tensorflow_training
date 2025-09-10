@@ -11,15 +11,15 @@ import argparse
 import math
 import io
 import os
-from tf_train.pipelines import train_input_fn, val_input_fn
-from tf_train.model_optimization import optimize_model
-from tf_train.config_parser import ConfigParser
-from tf_train.saving import save_model
-from tf_train.model import get_model
-import tf_train.optimizer as module_optim
-import tf_train.metric as module_metric
-import tf_train.loss as module_loss
-import tf_train.logging as module_log
+from tensorflow_training.pipelines import train_input_fn, val_input_fn
+from tensorflow_training.model_optimization import optimize_model
+from tensorflow_training.config_parser import ConfigParser
+from tensorflow_training.saving import save_model
+from tensorflow_training.model import get_model
+import tensorflow_training.optimizer as module_optim
+import tensorflow_training.metric as module_metric
+import tensorflow_training.loss as module_loss
+import tensorflow_training.logging as module_log
 
 
 def train(config: ConfigParser):

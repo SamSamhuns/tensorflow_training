@@ -15,10 +15,10 @@ import tensorflow as tf
 from omegaconf import OmegaConf, DictConfig
 from dotenv import dotenv_values
 from easydict import EasyDict as edict
-from tf_train.logging import setup_logging_config
-from tf_train.model.models_info import model_info_dict
-from tf_train.utils.tf_utils import count_samples_in_tfr
-from tf_train.utils.common import get_git_revision_hash
+from tensorflow_training.logging import setup_logging_config
+from tensorflow_training.model.models_info import model_info_dict
+from tensorflow_training.utils.tf_utils import count_samples_in_tfr
+from tensorflow_training.utils.common import get_git_revision_hash
 
 
 def parse_omegaconf_primitive(val_str):

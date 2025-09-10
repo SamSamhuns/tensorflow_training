@@ -6,7 +6,7 @@ from functools import partial
 import numpy as np
 import tensorflow as tf
 import tensorflow_model_optimization as tfmot
-from tf_train.utils import rgetattr
+from tensorflow_training.utils import rgetattr
 
 
 # @tf.function

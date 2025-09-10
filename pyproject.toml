@@ -1,0 +1,28 @@
+[project]
+name = "tensorflow-training"
+version = "0.1.0"
+description = "Tensorflow training"
+authors = [
+    {name = "SamSamhuns",email = "samhunsadamant@gmail.com"}
+]
+license = {text = "Apache 2.0"}
+readme = "README.md"
+requires-python = ">=3.9,<3.13"
+dependencies = [
+    "easydict==1.13",
+    "matplotlib==3.9.0",
+    "omegaconf==2.3.0",
+    "python-dotenv==1.0.1",
+    "scikit-learn==1.6.1",
+    "tensorflow==2.16.1; sys_platform == 'darwin'",
+    "tf-keras==2.16.0; sys_platform == 'darwin'",
+    "tensorflow[and-cuda]==2.18.0; sys_platform == 'linux'",
+    "tf-keras==2.18.0; sys_platform == 'linux'",
+    "tensorflow-model-optimization==0.8.0",
+    "tqdm==4.67.1"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

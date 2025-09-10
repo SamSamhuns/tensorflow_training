@@ -2,7 +2,7 @@ experiment_name: Image_Classification
 save_dir: checkpoints
 seed: 42
 resume_checkpoint: null
-# reference_supported_arch: # check tf_train/model/models_info.py
+# reference_supported_arch: # check tensorflow_training/model/models_info.py
 # - Facenet, Densenet121
 # - InceptionResNetV2, InceptionV3, Xception
 # - EfficientNetB0, EfficientNetB2, EfficientNetB4, EfficientNetB6

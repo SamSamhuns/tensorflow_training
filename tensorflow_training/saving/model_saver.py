@@ -3,7 +3,7 @@ from functools import partial
 
 import tensorflow as tf
 import tensorflow_model_optimization as tfmot
-from tf_train.pipelines import representative_data_gen as repr_data_gen
+from tensorflow_training.pipelines import representative_data_gen as repr_data_gen
 
 
 def get_flops(tf_model_path: str, config) -> float:

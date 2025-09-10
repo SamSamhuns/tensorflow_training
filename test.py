@@ -1,8 +1,8 @@
 from dotenv import load_dotenv
 load_dotenv(".env")
 # set env ars from .env before importing any python libraries
-from tf_train.config_parser import ConfigParser
-import tf_train.metric as module_metric
+from tensorflow_training.config_parser import ConfigParser
+import tensorflow_training.metric as module_metric
 import tensorflow as tf
 import numpy as np
 import tf_keras

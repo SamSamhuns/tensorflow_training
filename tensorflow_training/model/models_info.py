@@ -1,6 +1,6 @@
 # in-built models are available at: https://www.tensorflow.org/api_docs/python/tf/keras/applications
-from tf_train.model.models import facenet, resnet50_places365
-from tf_train.model.models import base
+from tensorflow_training.model.models import facenet, resnet50_places365
+from tensorflow_training.model.models import base
 import tensorflow as tf
 
 # Note: the model msut match the name of the final_module if it is not None
