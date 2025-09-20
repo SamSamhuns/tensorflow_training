@@ -41,7 +41,7 @@ jobs:
       - name: Download CIFAR-10 images
         run: |
           mkdir -p data
-          git clone --depth 1 git@github.com:YoongiKim/CIFAR-10-images.git data/CIFAR-10-images
+          git clone --depth 1 https://github.com/YoongiKim/CIFAR-10-images.git data/CIFAR-10-images
 
       - name: Convert CIFAR-10 to TFRecord
         run: |
