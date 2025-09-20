@@ -13,8 +13,7 @@ Train TensorFlow models for image/video/features classification or other tasks. 
     - [Docker Setup (Recommended)](#docker-setup-recommended)
     - [Install requirements with `poetry` (Recommended):](#install-requirements-with-poetry-recommended)
     - [Install requirements with `venv`:](#install-requirements-with-venv)
-      - [Using GPU](#using-gpu)
-    - [Or, Install requirements with `conda`](#or-install-requirements-with-conda)
+    - [Install requirements with `conda`](#install-requirements-with-conda)
   - [Data Preparation](#data-preparation)
     - [OPTIONAL: Data Duplication and Cleaning](#optional-data-duplication-and-cleaning)
     - [OPTIONAL: Train-Val-Test Splitting](#optional-train-val-test-splitting)
@@ -33,7 +32,7 @@ Install `tensorflow` and related `cudnn` libraries from the [tensorflow-official
 
 ### Setup environment file
 
-Create a `.env` file with the following contents with the correct paths ensuring the correct `CUDA` install path:
+Create a `.env` file with the following contents with the correct paths ensuring the correct `CUDA` install path, with `cp .env.example .env`:
 
 ```yaml
 XLA_FLAGS="--xla_gpu_cuda_data_dir=/usr/local/cuda"
@@ -74,20 +73,7 @@ python -m venv venv; source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-#### Using GPU
-
-When using a python `venv`, `CUDA` libraries must be present in the current path. If `CUDA` was installed to `usr/local/cuda`, the following commands should be added to the current shell source file (`~/.bash_profile` or `~/.bashrc`).
-
-```shell
-# Set cuda LD_LIBRARY_PATH
-export LD_LIBRARY_PATH="/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
-# add cuda bin dir to path
-export PATH="$PATH:/usr/local/cuda/bin"
-```
-
-The environment variable `XLA_FLAGS="--xla_gpu_cuda_data_dir=/usr/local/cuda` must also be set to the `CUDA` directory in the `.env` file.
-
-### Or, Install requirements with `conda`
+### Install requirements with `conda`
 
 ```shell
 conda create --name tf_gpu tensorflow-gpu python=3.12 -y
@@ -99,7 +85,7 @@ Note: `Conda` sets the `cuda`, `cudnn` and `cudatoolkit` automatically, download
 
 ## Data Preparation
 
-Assuming the data directory must be organized according to the following structure, with sub-directories having class names containing images. THe CIFAR-10 dataset in JPG format can be acquired from <https://github.com/YoongiKim/CIFAR-10-images> for a sample train and test.
+Assuming the data directory must be organized according to the following structure, with sub-directories having class names containing images. The `CIFAR-10` dataset in JPG format can be acquired from <https://github.com/YoongiKim/CIFAR-10-images> for a sample train and test.
 
 i.e.
 

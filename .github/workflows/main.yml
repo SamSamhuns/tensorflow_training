@@ -9,7 +9,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: Checkout code
@@ -23,7 +23,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libsndfile1
+          sudo apt-get install -y libsndfile1 git
 
       - name: Install Poetry
         run: |
@@ -34,9 +34,22 @@ jobs:
         run: |
           poetry install --all-groups
 
-      - name: Set up .env
+      - name: Prepare .env
         run: |
           cp .env.example .env
+
+      - name: Download CIFAR-10 images
+        run: |
+          mkdir -p data
+          git clone --depth 1 git@github.com:YoongiKim/CIFAR-10-images.git data/CIFAR-10-images
+
+      - name: Convert CIFAR-10 to TFRecord
+        run: |
+          mkdir -p data/tfrecord_dataset/train data/tfrecord_dataset/test
+          poetry run python data_preparation/convert_imgs_to_tfrecord.py \
+            --sd data/CIFAR-10-images/train --td data/tfrecord_dataset/train
+          poetry run python data_preparation/convert_imgs_to_tfrecord.py \
+            --sd data/CIFAR-10-images/test --td data/tfrecord_dataset/test
 
       - name: Run integration tests
         run: |
