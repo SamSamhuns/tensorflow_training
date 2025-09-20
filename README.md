@@ -9,7 +9,8 @@ Train TensorFlow models for image/video/features classification or other tasks. 
   - [Requirements](#requirements)
     - [Setup environment file](#setup-environment-file)
     - [Docker Setup (Recommended)](#docker-setup-recommended)
-    - [Install requirements with `venv`](#install-requirements-with-venv)
+    - [Install requirements with `poetry` (Recommended):](#install-requirements-with-poetry-recommended)
+    - [Install requirements with `venv`:](#install-requirements-with-venv)
       - [Using GPU](#using-gpu)
     - [Or, Install requirements with `conda`](#or-install-requirements-with-conda)
   - [Data Preparation](#data-preparation)
@@ -56,11 +57,18 @@ bash scripts/build_docker.sh
 bash scripts/run_docker.sh -p TF_BOARD_PORT
 ```
 
-### Install requirements with `venv`
+### Install requirements with `poetry` (Recommended):
 
 ```shell
-python -m venv venv
-source venv/bin/activate
+poetry install --all-groups
+# export pyproject.toml requirements to requirements.txt
+python scripts/poetry_to_pip_requirements.py
+```
+
+### Install requirements with `venv`:
+
+```shell
+python -m venv venv; source venv/bin/activate
 pip install -r requirements.txt
 ```
 
@@ -80,7 +88,7 @@ The environment variable `XLA_FLAGS="--xla_gpu_cuda_data_dir=/usr/local/cuda` mu
 ### Or, Install requirements with `conda`
 
 ```shell
-conda create --name tf_gpu tensorflow-gpu python=3.9 -y
+conda create --name tf_gpu tensorflow-gpu python=3.12 -y
 conda activate tf_gpu
 while read requirement; do conda install --yes $requirement; done < requirements.txt
 ```
