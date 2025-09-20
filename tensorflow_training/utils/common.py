@@ -4,7 +4,6 @@ from pathlib import Path
 import subprocess
 import functools
 import json
-from omegaconf import DictConfig
 
 
 def read_json(fpath: str) -> dict:

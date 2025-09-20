@@ -4,7 +4,10 @@ import time
 import numpy as np
 from functools import partial
 
-from triton_server.utils import extract_data_from_media, get_client_and_model_metadata_config
+from triton_server.utils import (
+    extract_data_from_media,
+    get_client_and_model_metadata_config,
+)
 from triton_server.utils import parse_model_grpc, get_inference_responses
 from triton_server.utils import FlagConfig, resize_maintaining_aspect
 
@@ -35,12 +38,8 @@ def postprocess(results, output_names):
 
 
 def run_inference(
-        input_file,
-        model_name,
-        threshold,
-        inference_mode="image",
-        port=8081,
-        debug=True):
+    input_file, model_name, threshold, inference_mode="image", port=8081, debug=True
+):
     FLAGS.media_filename = input_file
     FLAGS.model_name = model_name
     FLAGS.threshold = threshold
@@ -59,7 +58,8 @@ def run_inference(
 
     if FLAGS.result_save_dir is not None:
         FLAGS.result_save_dir = os.path.join(
-            FLAGS.result_save_dir, f"{FLAGS.model_name}")
+            FLAGS.result_save_dir, f"{FLAGS.model_name}"
+        )
         os.makedirs(FLAGS.result_save_dir, exist_ok=True)
     if FLAGS.debug:
         print(f"Running model {FLAGS.model_name}")
@@ -69,10 +69,11 @@ def run_inference(
         raise Exception("Model could not be loaded in the server")
     triton_client, model_metadata, model_config = model_info
 
-    # parse_model_grpc returns max_batch_size, input_name, output_name, h, w, c, format, dtype 
+    # parse_model_grpc returns max_batch_size, input_name, output_name, h, w, c, format, dtype
     # input_name, output_name, format, dtype are all lists
     max_batch_size, input_name, output_name, h, w, _, _, dtype = parse_model_grpc(
-        model_metadata, model_config.config)
+        model_metadata, model_config.config
+    )
 
     # check for dynamic input shapes
     if h == -1:
@@ -97,20 +98,20 @@ def run_inference(
     # Important, make sure the first input is the input image
     image_input_idx = 0
     preprocess_dtype = partial(
-        preprocess, width=w, height=h, new_type=nptype_dict[dtype[image_input_idx]])
+        preprocess, width=w, height=h, new_type=nptype_dict[dtype[image_input_idx]]
+    )
     # all_reqested_images_orig will be [] if FLAGS.result_save_dir is None
-    image_data, all_reqested_images_orig, all_req_imgs_orig_size = extract_data_from_media(
-        FLAGS, preprocess_dtype, filenames)
+    image_data, all_reqested_images_orig, all_req_imgs_orig_size = (
+        extract_data_from_media(FLAGS, preprocess_dtype, filenames)
+    )
     if len(image_data) == 0:
         raise Exception("Image data is missing. Aborting inference")
 
-    trt_inf_data = (triton_client, input_name,
-                    output_name, dtype, max_batch_size)
+    trt_inf_data = (triton_client, input_name, output_name, dtype, max_batch_size)
     # if a model has multiple inputs, pass inputs as a list
     image_data_list = [image_data]
     # get inference results
-    responses = get_inference_responses(
-        image_data_list, FLAGS, trt_inf_data)
+    responses = get_inference_responses(image_data_list, FLAGS, trt_inf_data)
 
     counter = 0
     final_result_list = []
@@ -126,6 +127,6 @@ def run_inference(
     if FLAGS.inference_mode == "video":
         final_result_list = [pred[0] for pred in final_result_list]
     if FLAGS.debug:
-        print(f"Time to process {counter} image(s)={time.time()-start_time}")
+        print(f"Time to process {counter} image(s)={time.time() - start_time}")
 
     return final_result_list

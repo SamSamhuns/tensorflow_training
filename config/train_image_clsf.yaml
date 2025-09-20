@@ -52,7 +52,7 @@ loss:
       label_smoothing: 0.0
 
 loss_weights:
-- 1.0
+  - 1.0
 
 callbacks:
   tensorboard_callback:
@@ -147,7 +147,7 @@ optimization:
     num_clusters: 4
     CentroidInitialization: clustering.keras.CentroidInitialization.DENSITY_BASED
     cluster_layer_names:
-    - conv2d_1
+      - conv2d_1
   quantize:
     use_quantization: false
     during_training_quantization: false
@@ -155,10 +155,10 @@ optimization:
     post_training_quantization: false
     is_model_already_quantized: false
     quantize_layer_names:
-    - conv2d_1
+      - conv2d_1
   prune:
     use_pruning: false
     prune_layers: false
     is_model_already_pruned: false
     prune_layer_names:
-    - conv2d_1
+      - conv2d_1

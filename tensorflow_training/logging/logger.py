@@ -5,7 +5,11 @@ from pathlib import Path
 from tensorflow_training.utils import read_json
 
 
-def setup_logging_config(save_dir, log_config='tensorflow_training/logging/logger_config.json', default_level=logging.INFO):
+def setup_logging_config(
+    save_dir,
+    log_config="tensorflow_training/logging/logger_config.json",
+    default_level=logging.INFO,
+):
     """
     Setup logging configuration
     """
@@ -13,11 +17,13 @@ def setup_logging_config(save_dir, log_config='tensorflow_training/logging/logge
     if log_config.is_file():
         config = read_json(log_config)
         # modify logging paths based on run config
-        for _, handler in config['handlers'].items():
-            if 'filename' in handler:
-                handler['filename'] = os.path.join(save_dir, handler['filename'])
+        for _, handler in config["handlers"].items():
+            if "filename" in handler:
+                handler["filename"] = os.path.join(save_dir, handler["filename"])
 
         logging.config.dictConfig(config)
     else:
-        print("Warning: logging configuration file is not found in {}.".format(log_config))
+        print(
+            "Warning: logging configuration file is not found in {}.".format(log_config)
+        )
         logging.basicConfig(level=default_level)

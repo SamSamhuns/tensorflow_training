@@ -5,7 +5,7 @@ import argparse
 from tqdm import tqdm
 import os.path as osp
 
-VALID_FILE_EXTS = {'jpg', 'jpeg', 'JPEG', 'png'}
+VALID_FILE_EXTS = {"jpg", "jpeg", "JPEG", "png"}
 
 # #################### Data Organization ############################
 #   source_data
@@ -51,8 +51,11 @@ def duplicate_data_dir(source_img_dir, duplicated_img_dir, target_number):
     # for each class in source data
     for dir_path in tqdm(dir_list):
         class_name = dir_path.split("/")[-1]  # get class name
-        f_list = [file for file in sorted(glob.glob(osp.join(dir_path, "*")))
-                  if osp.splitext(file)[1][1:] in VALID_FILE_EXTS]
+        f_list = [
+            file
+            for file in sorted(glob.glob(osp.join(dir_path, "*")))
+            if osp.splitext(file)[1][1:] in VALID_FILE_EXTS
+        ]
 
         class_target_dir = osp.join(target_dir, class_name)
         if osp.exists(class_target_dir):
@@ -72,20 +75,34 @@ def duplicate_data_dir(source_img_dir, duplicated_img_dir, target_number):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--sd', '--source_data_path',
-                        type=str, dest="source_data_path", required=True,
-                        help="Path with class imgs inside subdirs")
-    parser.add_argument('--td', '--target_data_path',
-                        type=str, dest="target_data_path", required=True,
-                        help="Path where imgs will be saved in subdirs repr classes with number matching target_number")
-    parser.add_argument('-n', '--target_number',
-                        type=int, dest="target_number", default=1000,
-                        help="""Target size to reach for each class after duplication.
+    parser.add_argument(
+        "--sd",
+        "--source_data_path",
+        type=str,
+        dest="source_data_path",
+        required=True,
+        help="Path with class imgs inside subdirs",
+    )
+    parser.add_argument(
+        "--td",
+        "--target_data_path",
+        type=str,
+        dest="target_data_path",
+        required=True,
+        help="Path where imgs will be saved in subdirs repr classes with number matching target_number",
+    )
+    parser.add_argument(
+        "-n",
+        "--target_number",
+        type=int,
+        dest="target_number",
+        default=1000,
+        help="""Target size to reach for each class after duplication.
                         If class has more imgs than target_number, only target_number imgs are copied.
-                        (default : %(default)s)""")
+                        (default : %(default)s)""",
+    )
     args = parser.parse_args()
-    duplicate_data_dir(
-        args.source_data_path, args.target_data_path, args.target_number)
+    duplicate_data_dir(args.source_data_path, args.target_data_path, args.target_number)
 
 
 if __name__ == "__main__":

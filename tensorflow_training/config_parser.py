@@ -42,20 +42,23 @@ class ConfigParser:
 
     Args:
         config: DictConfig object with configurations.
-        run_id: Unique Identifier for train & test. Used to save ckpts & training log.
+        run_id: Unique Identifier for train & test. Used to save checkpoints & training log.
         modification: Additional key-value pairs to override in config.
     """
-    def __init__(self,
-                 config: DictConfig,
-                 run_id: Optional[str] = None,
-                 verbose: bool = False,
-                 modification: dict = None):
+
+    def __init__(
+        self,
+        config: DictConfig,
+        run_id: Optional[str] = None,
+        verbose: bool = False,
+        modification: dict = None,
+    ):
         self.config = copy.deepcopy(config)
 
         # Apply any modifications to the configuration
         if modification:
             # Removes keys that have None as values
-            modification = {k:v for k,v in modification.items() if v is not None}
+            modification = {k: v for k, v in modification.items() if v is not None}
             for k, v in modification.items():
                 OmegaConf.update(self.config, k, v, merge=True)
 
@@ -97,37 +100,42 @@ class ConfigParser:
         n_cls = self.config.data.num_classes
         class_map_txt = self.config.data.class_map_txt_path
         assert osp.exists(class_map_txt), f"{class_map_txt} does not exist"
-        with open(class_map_txt, 'r', encoding="utf-8") as fptr:
+        with open(class_map_txt, "r", encoding="utf-8") as fptr:
             n_fcls = len(fptr.readlines())
-            assert n_fcls == n_cls, f"num_classes {n_cls} and classes in {class_map_txt} {n_fcls} don't match"
+            assert n_fcls == n_cls, (
+                f"num_classes {n_cls} and classes in {class_map_txt} {n_fcls} don't match"
+            )
 
         # count total training and validation samples if they are not explicitely provided
         num_train = self.config.data.num_train_samples
         if num_train:
-            print(f"Note: num_train_samples: {num_train} was provided in config.",
-                  "Make sure this is correct since train epoch size depends on this")
+            print(
+                f"Note: num_train_samples: {num_train} was provided in config.",
+                "Make sure this is correct since train epoch size depends on this",
+            )
         else:
-            self.config.data.num_train_samples = count_samples_in_tfr(self.config.data.train_data_dir)
+            self.config.data.num_train_samples = count_samples_in_tfr(
+                self.config.data.train_data_dir
+            )
         num_val = self.config.data.num_val_samples
         if num_val:
-            print(f"Note: num_val_samples: {num_val} was provided in config.",
-                  "Make sure this is correct since val epoch size depends on this")
+            print(
+                f"Note: num_val_samples: {num_val} was provided in config.",
+                "Make sure this is correct since val epoch size depends on this",
+            )
         else:
             self.config.data.num_val_samples = count_samples_in_tfr(
-                self.config.data.val_data_dir)
+                self.config.data.val_data_dir
+            )
 
         # Save the updated config to the save directory
         OmegaConf.save(self.config, osp.join(save_root, "config.yaml"))
 
         # configure logging module
         setup_logging_config(_logs_dir)
-        self.log_levels = {
-            0: logging.WARNING,
-            1: logging.INFO,
-            2: logging.DEBUG
-        }
+        self.log_levels = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
 
-        # set model info obj, config obj and resume chkpt
+        # set model info obj, config obj and resume checkpoint
         self._model = edict(model_info_dict[self.config.arch])
         # assign updated log and save dir after saving config
         self.config.logs_dir = _logs_dir
@@ -135,10 +143,12 @@ class ConfigParser:
         self.config.models_dir = _models_dir
 
     @classmethod
-    def from_args(cls,
-                  args: argparse.Namespace,
-                  modification: Optional[dict] = None,
-                  add_all_args: bool = True):
+    def from_args(
+        cls,
+        args: argparse.Namespace,
+        modification: Optional[dict] = None,
+        add_all_args: bool = True,
+    ):
         """
         Initialize this class from CLI arguments. Used in train, test.
         Args:
@@ -146,14 +156,14 @@ class ConfigParser:
             modification: Key-value pair to override in config.
                           Can have nested structure separated by periods(.)
                           e.g. {"key1":"val1", "key2.sub_key2":"val2"}
-            add_all_args: Add all args to modification 
+            add_all_args: Add all args to modification
                           that are not alr present as top-level keys.
         """
         modification = {} if not modification else modification
         # Add all args to modification from args
         if add_all_args:
             # only check top-level keys
-            mod_keys = {k.rsplit('.')[0] for k in modification}
+            mod_keys = {k.rsplit(".")[0] for k in modification}
             for arg, value in vars(args).items():
                 if arg not in mod_keys and arg not in {"override"}:
                     modification[arg] = value
@@ -162,13 +172,19 @@ class ConfigParser:
         config = OmegaConf.load(args.config)
         # Apply dotlist overrides (-o)
         if args.override:
-            OmegaConf.set_struct(config, True)  # Enable strict mode to disallow unknown keys
+            OmegaConf.set_struct(
+                config, True
+            )  # Enable strict mode to disallow unknown keys
             for override in args.override:
-                if '=' not in override:
-                    raise ValueError(f"Invalid override format: {override}. Expected format: key=value")
+                if "=" not in override:
+                    raise ValueError(
+                        f"Invalid override format: {override}. Expected format: key=value"
+                    )
                 key, val_str = override.split("=", 1)
                 OmegaConf.update(config, key, parse_omegaconf_primitive(val_str))
-            OmegaConf.set_struct(config, False)  # Disable strict mode to allow runtime modifications later
+            OmegaConf.set_struct(
+                config, False
+            )  # Disable strict mode to allow runtime modifications later
 
         return cls(config, args.run_id, args.verbose, modification)
 
@@ -186,7 +202,9 @@ class ConfigParser:
             name = [name]
         module_name = _get_by_path(self, name + ["type"])
         module_args = dict(_get_by_path(self, name + ["args"]))
-        assert all(k not in module_args for k in kwargs), 'Overwriting kwargs given in config file is not allowed'
+        assert all(k not in module_args for k in kwargs), (
+            "Overwriting kwargs given in config file is not allowed"
+        )
         module_args.update(kwargs)
         return getattr(module, module_name)(*args, **module_args)
 
@@ -205,8 +223,9 @@ class ConfigParser:
             name = [name]
         module_name = _get_by_path(self, name + ["type"])
         module_args = dict(_get_by_path(self, name + ["args"]))
-        assert all([k not in module_args for k in kwargs]
-                   ), 'Overwriting kwargs given in config file is not allowed'
+        assert all([k not in module_args for k in kwargs]), (
+            "Overwriting kwargs given in config file is not allowed"
+        )
         module_args.update(kwargs)
         return partial(getattr(module, module_name), *args, **module_args)
 
@@ -219,22 +238,23 @@ class ConfigParser:
         if hasattr(self.config, name):
             return getattr(self.config, name)
         raise AttributeError(
-            f"'{type(self).__name__}' object has no attribute '{name}'")
+            f"'{type(self).__name__}' object has no attribute '{name}'"
+        )
 
     def setup_logger(self, name: str, verbosity: int = 2):
-        msg_verbosity = 'verbosity option {} is invalid. Valid options are {}.'.format(
-            verbosity, self.log_levels.keys())
+        msg_verbosity = "verbosity option {} is invalid. Valid options are {}.".format(
+            verbosity, self.log_levels.keys()
+        )
         assert verbosity in self.log_levels, msg_verbosity
         self.logger = logging.getLogger(name)
         self.logger.setLevel(self.log_levels[verbosity])
-        print(
-            f"Logger {name} initialized with level: {self.log_levels[verbosity]}")
+        print(f"Logger {name} initialized with level: {self.log_levels[verbosity]}")
 
     # set read-only attributes
     @property
     def model(self):
         return self._model
-    
+
     def __str__(self):
         return OmegaConf.to_yaml(self.config)
 

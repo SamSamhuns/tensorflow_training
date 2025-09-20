@@ -23,16 +23,14 @@ class Resnet50Places365Pred(tf.keras.Model):
         units = init_units
         # add num_final_blocks-1 blocks before final block
         for _ in range(num_final_blocks - 1):
-            dense = tf.keras.layers.Dense(
-                units,
-                activation='relu')
+            dense = tf.keras.layers.Dense(units, activation="relu")
             blocks.append(dense)
             units //= 2
 
         # last classification and activation layer
         # sep to set last layer dtype to f32 when using mixed_precision
-        blocks.append(tf.keras.layers.Dense(num_classes, dtype='float32'))
-        blocks.append(tf.keras.layers.Activation('softmax', dtype='float32'))
+        blocks.append(tf.keras.layers.Dense(num_classes, dtype="float32"))
+        blocks.append(tf.keras.layers.Activation("softmax", dtype="float32"))
         self.blocks = tf.keras.Sequential([*blocks])
 
     def call(self, x):
@@ -40,6 +38,6 @@ class Resnet50Places365Pred(tf.keras.Model):
 
 
 def preprocess_input(image_rgb):
-    image_rgb = image_rgb / 255.
+    image_rgb = image_rgb / 255.0
     img_whitened = (image_rgb - MEAN) / STD
     return img_whitened

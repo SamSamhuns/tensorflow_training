@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+
 load_dotenv(".env")
 # set env ars from .env before importing any python libraries
 from tensorflow_training.config_parser import ConfigParser
@@ -16,21 +17,21 @@ import io
 
 
 def get_class_name_list(mapping_file: str):
-    """ mapping_file must have fmt
+    """mapping_file must have fmt
     0   class1
     1   class2
     2   class3
     """
     map_list = []
-    with open(str(mapping_file), 'r') as fmap:
+    with open(str(mapping_file), "r") as fmap:
         for line in fmap:
-            line = line.strip().split('\t')
+            line = line.strip().split("\t")
             map_list.append(line[1])
     return sorted(map_list)
 
 
 def test(config: ConfigParser):
-    config.setup_logger('test')
+    config.setup_logger("test")
     # tf.keras.models.load_model is not working so tf_keras.models.load_model is used
     model = tf_keras.models.load_model(config.resume_checkpoint)
 
@@ -40,12 +41,13 @@ def test(config: ConfigParser):
     t0 = time.time()
     test_ds = tf.keras.preprocessing.image_dataset_from_directory(
         config["data"]["test_data_dir"],
-        labels='inferred',
+        labels="inferred",
         class_names=classes_list,
         image_size=(h, w),
         seed=config["seed"],
         shuffle=False,
-        batch_size=config["data"]["test_bsize"])
+        batch_size=config["data"]["test_bsize"],
+    )
 
     # print(test_ds.class_names)
     n_cls = config["data"]["num_classes"]
@@ -79,12 +81,19 @@ def test(config: ConfigParser):
     met_func_dict = {}
     # load metric funcs with necessary params
     for _metric in config["test_metrics"]:
-        if _metric in {"acc_per_class", "confusion_matrix"} or config["test_metrics"][_metric]["type"] in {"top_k_acc"}:
-            mfunc = config.init_ftn(["test_metrics", _metric], module_metric,
-                                    num_classes=n_cls)
+        if _metric in {"acc_per_class", "confusion_matrix"} or config["test_metrics"][
+            _metric
+        ]["type"] in {"top_k_acc"}:
+            mfunc = config.init_ftn(
+                ["test_metrics", _metric], module_metric, num_classes=n_cls
+            )
         elif _metric in {"plot_confusion_matrix"}:
-            mfunc = config.init_ftn(["test_metrics", _metric], module_metric,
-                                    target_names=classes_list, savepath=os.path.join(config.logs_dir, "cm.jpg"))
+            mfunc = config.init_ftn(
+                ["test_metrics", _metric],
+                module_metric,
+                target_names=classes_list,
+                savepath=os.path.join(config.logs_dir, "cm.jpg"),
+            )
         else:
             mfunc = config.init_ftn(["test_metrics", _metric], module_metric)
         met_func_dict[_metric] = mfunc
@@ -99,23 +108,49 @@ def test(config: ConfigParser):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Tensorflow Testing')
+    parser = argparse.ArgumentParser(description="Tensorflow Testing")
     parser.add_argument(
-        '--cfg', '--config', type=str, dest="config", required=True,
-        help="YAML config file path.")
+        "--cfg",
+        "--config",
+        type=str,
+        dest="config",
+        required=True,
+        help="YAML config file path.",
+    )
     parser.add_argument(
-        '-r', '--resume_checkpoint', type=str, dest="resume_checkpoint", required=True,
-        help="Path to checkpoint to use for testing")
+        "-r",
+        "--resume_checkpoint",
+        type=str,
+        dest="resume_checkpoint",
+        required=True,
+        help="Path to checkpoint to use for testing",
+    )
     parser.add_argument(
-        '--id', '--run_id', type=str, dest="run_id", default="test_" + datetime.now().strftime(r'%Y%m%d_%H%M%S'),
-        help='Unique identifier for test process. Annotates test logs. (default: %(default)s)')
+        "--id",
+        "--run_id",
+        type=str,
+        dest="run_id",
+        default="test_" + datetime.now().strftime(r"%Y%m%d_%H%M%S"),
+        help="Unique identifier for test process. Annotates test logs. (default: %(default)s)",
+    )
     parser.add_argument(
-        "-o", "--override", type=str, nargs="+", dest="override", default=None,
+        "-o",
+        "--override",
+        type=str,
+        nargs="+",
+        dest="override",
+        default=None,
         help="Override config params. Must match keys in YAML config. "
-        "e.g. -o seed=1 dataset.type=NewDataType model.layers=[64,128,256] model.layers[2]=512 (default: %(default)s)")
+        "e.g. -o seed=1 dataset.type=NewDataType model.layers=[64,128,256] model.layers[2]=512 (default: %(default)s)",
+    )
     parser.add_argument(
-        "-v", "--verbose", action="store_true", dest="verbose", default=False,
-        help="Run training in verbose mode (default: %(default)s)")
+        "-v",
+        "--verbose",
+        action="store_true",
+        dest="verbose",
+        default=False,
+        help="Run training in verbose mode (default: %(default)s)",
+    )
     args = parser.parse_args()
 
     # To override key-value params from YAML file,

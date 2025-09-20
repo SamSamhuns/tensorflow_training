@@ -13,26 +13,36 @@ import cv2
 import tqdm
 import numpy as np
 
-VALID_FILE_EXTS = {'mp4', 'avi'}
+VALID_FILE_EXTS = {"mp4", "avi"}
 
 today = datetime.today()
-year, month, day, hour, minute, sec = today.year, today.month, today.day, today.hour, today.minute, today.second
+year, month, day, hour, minute, sec = (
+    today.year,
+    today.month,
+    today.day,
+    today.hour,
+    today.minute,
+    today.second,
+)
 
 os.makedirs("logs", exist_ok=True)
-logging.basicConfig(filename=f'logs/extraction_statistics_{year}{month}{day}_{hour}:{minute}:{sec}.log',
-                    level=logging.INFO)
+logging.basicConfig(
+    filename=f"logs/extraction_statistics_{year}{month}{day}_{hour}:{minute}:{sec}.log",
+    level=logging.INFO,
+)
 
 
 class FrameExtractor:
-    def __init__(self, source_path, target_path, cmap_path, reshape_size, max_n_frame, pad_zeros):
+    def __init__(
+        self, source_path, target_path, cmap_path, reshape_size, max_n_frame, pad_zeros
+    ):
         self.source_path = source_path
         self.target_path = target_path
         self.cmap_path = cmap_path
         self.reshape_size = reshape_size
         self.max_n_frame = max_n_frame
         self.pad_zeros = pad_zeros
-        self.cname_to_label_dict = self.get_cname_to_label_dict(
-            self.source_path)
+        self.cname_to_label_dict = self.get_cname_to_label_dict(self.source_path)
         os.makedirs(self.target_path, exist_ok=True)
         self.save_cname_to_label_dict(self.cname_to_label_dict, self.cmap_path)
 
@@ -57,15 +67,14 @@ class FrameExtractor:
         """
         Saves the class name to label dict as class label to name mapping in a txt file at cmap_path
         """
-        with open(os.path.join(cmap_path), 'w') as f:
+        with open(os.path.join(cmap_path), "w") as f:
             # for each class
             for class_name, class_id in cdict.items():
                 f.write(str(class_id) + "\t" + class_name + "\n")
 
     def extract_img_np_arr_first_nframe(self, video_path):
-
         cap = av.open(video_path)
-        cap.streams.video[0].thread_type = 'AUTO'
+        cap.streams.video[0].thread_type = "AUTO"
         fps = int(round(cap.streams.video[0].average_rate))
         # nframes = np.floor(cap.streams.video[0].frames)
         img_list = []
@@ -86,14 +95,14 @@ class FrameExtractor:
         return np.array(img_list)
 
     def extract_img_np_arr_uniform_nframe(self, video_path):
-
         cap = av.open(video_path)
-        cap.streams.video[0].thread_type = 'AUTO'
+        cap.streams.video[0].thread_type = "AUTO"
         # fps = int(round(cap.streams.video[0].average_rate))
         video_nframes = np.floor(cap.streams.video[0].frames)
         # uniform sample max_n_frame frames from video
         uniform_frame_set = set(
-            np.arange(0, video_nframes, video_nframes // self.max_n_frame))
+            np.arange(0, video_nframes, video_nframes // self.max_n_frame)
+        )
         img_list = []
         i = 0
         save_frames_num = 0
@@ -122,9 +131,8 @@ class FrameExtractor:
                     h, w = self.reshape_size
                 else:
                     h, w = np_arr.shape[1:3]
-                np_arr = np.concatenate(
-                    [np_arr, np.zeros([diff, h, w, 3])], axis=0)
-            cname = video_path.split('/')[-2]
+                np_arr = np.concatenate([np_arr, np.zeros([diff, h, w, 3])], axis=0)
+            cname = video_path.split("/")[-2]
             label = self.cname_to_label_dict[cname]
             np.savez_compressed(file=npy_path, arr=np_arr, label=label)
         except Exception as e:
@@ -141,38 +149,42 @@ class FrameExtractor:
         total_media_ext = 0
         # for each class in raw data
         for dir_path in tqdm.tqdm(dir_path_list):
-            if not os.path.isdir(dir_path):       # skip if path is not a dir
+            if not os.path.isdir(dir_path):  # skip if path is not a dir
                 continue
-            class_name = osp.basename(dir_path)   # get class name
+            class_name = osp.basename(dir_path)  # get class name
             print(f"Frames will be extracted from class {class_name}")
-            media_path_list = [mpath for mpath in glob.glob(osp.join(dir_path, "*"))
-                               if osp.splitext(mpath)[1][1:] in VALID_FILE_EXTS]
+            media_path_list = [
+                mpath
+                for mpath in glob.glob(osp.join(dir_path, "*"))
+                if osp.splitext(mpath)[1][1:] in VALID_FILE_EXTS
+            ]
 
             target_save_dir = osp.join(self.target_path, class_name)
             os.makedirs(target_save_dir, exist_ok=True)
             class_media_ext = 0
             for media_path in tqdm.tqdm(media_path_list):
                 try:
-                    npy_name = osp.basename(media_path).split('.')[0] + ".npy"
+                    npy_name = osp.basename(media_path).split(".")[0] + ".npy"
                     npy_frames_save_path = osp.join(target_save_dir, npy_name)
 
                     if osp.exists(npy_frames_save_path):  # skip pre-extracted faces
-                        print(
-                            f"Skipping {npy_frames_save_path} as it already exists.")
+                        print(f"Skipping {npy_frames_save_path} as it already exists.")
                         continue
 
                     class_media_ext += self.extract_and_save_img_np_arr(
-                        media_path, npy_frames_save_path)
+                        media_path, npy_frames_save_path
+                    )
                 except Exception as e:
                     print(f"{e}. Extraction failed for media {media_path}")
                     traceback.print_exc()
             total_media_ext += class_media_ext
             logging.info(
-                f"{class_media_ext} frame arrays extracted for class {class_name}")
+                f"{class_media_ext} frame arrays extracted for class {class_name}"
+            )
         logging.info(
-            f"{total_media_ext} frame arrays extracted from {self.source_path} and saved in {self.target_path}")
-        logging.info(
-            f"Total time taken: {time.time() - init_tm:.2f}s")
+            f"{total_media_ext} frame arrays extracted from {self.source_path} and saved in {self.target_path}"
+        )
+        logging.info(f"Total time taken: {time.time() - init_tm:.2f}s")
 
     def extract_frames_from_video_multi_process(self):
         print("Multi Process Extraction")
@@ -183,38 +195,40 @@ class FrameExtractor:
 
             dir_path_list = glob.glob(os.path.join(self.source_path, "*"))
             for dir_path in tqdm.tqdm(dir_path_list):
-                if not os.path.isdir(dir_path):       # skip if path is not a dir
+                if not os.path.isdir(dir_path):  # skip if path is not a dir
                     continue
-                class_name = osp.basename(dir_path)   # get class name
-                media_path_list = [mpath for mpath in glob.glob(osp.join(dir_path, "*"))
-                                   if osp.splitext(mpath)[1][1:] in VALID_FILE_EXTS]
+                class_name = osp.basename(dir_path)  # get class name
+                media_path_list = [
+                    mpath
+                    for mpath in glob.glob(osp.join(dir_path, "*"))
+                    if osp.splitext(mpath)[1][1:] in VALID_FILE_EXTS
+                ]
 
                 target_save_dir = osp.join(self.target_path, class_name)
                 os.makedirs(target_save_dir, exist_ok=True)
                 for media_path in media_path_list:
-                    npy_name = osp.basename(media_path).split('.')[0] + ".npy"
+                    npy_name = osp.basename(media_path).split(".")[0] + ".npy"
                     npy_frames_save_path = osp.join(target_save_dir, npy_name)
 
                     if osp.exists(npy_frames_save_path):  # skip pre-extracted faces
-                        print(
-                            f"Skipping {npy_frames_save_path} as it already exists.")
+                        print(f"Skipping {npy_frames_save_path} as it already exists.")
                         continue
                     mult_func_args.append((media_path, npy_frames_save_path))
 
-            results = pool.starmap(
-                self.extract_and_save_img_np_arr, mult_func_args)
+            results = pool.starmap(self.extract_and_save_img_np_arr, mult_func_args)
             pool.close()
             pool.join()
             return results
 
         init_tm = time.time()
         total_media_ext = _multi_process_np_arr_extraction(
-            self.source_path, self.target_path)
+            self.source_path, self.target_path
+        )
 
         logging.info(
-            f"{total_media_ext} frame arrays extracted from {self.source_path} and saved in {self.target_path}")
-        logging.info(
-            f"Total time taken: {time.time() - init_tm:.2f}s")
+            f"{total_media_ext} frame arrays extracted from {self.source_path} and saved in {self.target_path}"
+        )
+        logging.info(f"Total time taken: {time.time() - init_tm:.2f}s")
 
 
 def main():
@@ -231,37 +245,78 @@ def main():
                 ...
     """
     parser = argparse.ArgumentParser("Extract frames from a video dataset.")
-    parser.add_argument('--sd', '--source_data_path',
-                        type=str, dest="source_data_path", required=True,
-                        help="Source dataset path with class imgs inside folders")
-    parser.add_argument('--td', '--target_data_path',
-                        type=str, dest="target_data_path", default="extracted_data",
-                        help="Target dataset path where video frames will be extracted to. (default: %(default)s)")
-    parser.add_argument('--mf', '--max_n_frame',
-                        type=int, dest="max_n_frame", default=15,
-                        help='Max number of frames to extract from video. (default: %(default)s)')
-    parser.add_argument('--rs', '--reshape_size',
-                        nargs=2, dest="reshape_size", default=None,
-                        help='Video frames are resized to this (w,h) -rs 224 224. (default: %(default)s)')
-    parser.add_argument('--mt', '--multiprocessing',
-                        action="store_true", dest="multiprocessing",
-                        help='Extract videos with multiprocessing. WARNING: Can slow down system (default: %(default)s)')
-    parser.add_argument('--pz', '--pad_zeros',
-                        action="store_true", dest="pad_zeros",
-                        help='Pad missing frames with np.zero if video has less frames than max_n_frame (default: %(default)s)')
-    parser.add_argument('--cm', '--class_map_txt_path',
-                        type=str, dest="class_map_txt_path", default="{TARGET_DATA_PATH}/dataset_classmap.txt",
-                        help='Path to txt file where class label & name will be saved to. (default: %(default)s)')
+    parser.add_argument(
+        "--sd",
+        "--source_data_path",
+        type=str,
+        dest="source_data_path",
+        required=True,
+        help="Source dataset path with class imgs inside folders",
+    )
+    parser.add_argument(
+        "--td",
+        "--target_data_path",
+        type=str,
+        dest="target_data_path",
+        default="extracted_data",
+        help="Target dataset path where video frames will be extracted to. (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--mf",
+        "--max_n_frame",
+        type=int,
+        dest="max_n_frame",
+        default=15,
+        help="Max number of frames to extract from video. (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--rs",
+        "--reshape_size",
+        nargs=2,
+        dest="reshape_size",
+        default=None,
+        help="Video frames are resized to this (w,h) -rs 224 224. (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--mt",
+        "--multiprocessing",
+        action="store_true",
+        dest="multiprocessing",
+        help="Extract videos with multiprocessing. WARNING: Can slow down system (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--pz",
+        "--pad_zeros",
+        action="store_true",
+        dest="pad_zeros",
+        help="Pad missing frames with np.zero if video has less frames than max_n_frame (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--cm",
+        "--class_map_txt_path",
+        type=str,
+        dest="class_map_txt_path",
+        default="{TARGET_DATA_PATH}/dataset_classmap.txt",
+        help="Path to txt file where class label & name will be saved to. (default: %(default)s)",
+    )
     args = parser.parse_args()
     if args.reshape_size:  # ensure reshape_size is of type int
         args.reshape_size = tuple(map(int, args.reshape_size))
 
-    source, target, cmap = args.source_data_path, args.target_data_path, args.class_map_txt_path
-    cmap = os.path.join(args.target_data_path,
-                        "dataset_classmap.txt") if cmap == "{TARGET_DATA_PATH}/dataset_classmap.txt" else cmap
+    source, target, cmap = (
+        args.source_data_path,
+        args.target_data_path,
+        args.class_map_txt_path,
+    )
+    cmap = (
+        os.path.join(args.target_data_path, "dataset_classmap.txt")
+        if cmap == "{TARGET_DATA_PATH}/dataset_classmap.txt"
+        else cmap
+    )
 
     frame_ext = FrameExtractor(
-        source, target, cmap, args.reshape_size, args.max_n_frame, args.pad_zeros)
+        source, target, cmap, args.reshape_size, args.max_n_frame, args.pad_zeros
+    )
     if args.multiprocessing:
         frame_ext.extract_frames_from_video_multi_process()
     else:

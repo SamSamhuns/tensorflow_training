@@ -13,8 +13,8 @@ class Classifier(tf.keras.Model):
         blocks = []
         # last classification and activation layer
         # sep to set last layer dtype to f32 when using mixed_precision
-        blocks.append(tf.keras.layers.Dense(num_classes, dtype='float32'))
-        blocks.append(tf.keras.layers.Activation('softmax', dtype='float32'))
+        blocks.append(tf.keras.layers.Dense(num_classes, dtype="float32"))
+        blocks.append(tf.keras.layers.Activation("softmax", dtype="float32"))
         self.blocks = tf.keras.Sequential([*blocks])
 
     def call(self, x):
