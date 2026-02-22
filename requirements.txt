@@ -9,3 +9,6 @@ tensorflow[and-cuda]==2.18.0; sys_platform == 'linux'
 tf-keras==2.18.0; sys_platform == 'linux'
 tensorflow-model-optimization==0.8.0
 tqdm==4.67.1
+urllib3 (>=2.6.3,<3.0.0)
+fonttools (>=4.61.1,<5.0.0)
+filelock (>=3.24.3,<4.0.0)
